@@ -16,6 +16,8 @@ TowerType id_tower[15];
 auto seed=chrono::steady_clock().now().time_since_epoch().count();
 mt19937 rng(seed);
 vector<pii> towerPos[2];
+PyObject* pFunc;
+int isTraining;
 
 struct Board
 {
@@ -36,10 +38,11 @@ namespace MyAI
 	using ftype=double;
 	const int ActionSize=133;
 	const int M=50;
-	const ftype dirArg=0.3;
 	const ftype cpuct=1;
-	vector<ftype> paddingGameInfo(int player_id,const GameInfo &info)
+	vector<ftype> paddingBoard(const Board &board)
 	{
+		auto player_id=board.player_id;
+		auto info=board.info;
 		memset(tower,0,sizeof(tower));
 		memset(ant_sum_hp,0,sizeof(ant_sum_hp));
 		memset(ant_max_hp,0,sizeof(ant_max_hp));
@@ -118,38 +121,71 @@ namespace MyAI
 
 		return vec;
 	}
-	vector<ftype> predictInfo(const Board &board,int applyDir)
+	PyObject* listFromVector(const vector<ftype> &v)
+	{
+		PyObject* list=PyList_New(0);
+		for(auto &x:v)
+		{
+			PyList_Append(list,Py_BuildValue("d",x));
+		}
+	}
+	vector<ftype> predictPY(const Board &board,int valid[],int applyDir)
 	{
 		vector<ftype> seq=paddingBoard(board);
-
+		vector<ftype> vvalid;
+		for(int i=0;i<ActionSize;i++) vvalid.emplace_back(valid[i]);
+		PyObject *list1=PyList_New(0),*list2=PyList_New(0);
+		for(auto &x:seq)
+		{
+			auto tmp=Py_BuildValue("f",x);
+			assert(tmp);
+			PyList_Append(list1,tmp);
+			Py_DecRef(tmp);
+		}
+		for(int i=0;i<ActionSize;i++)
+		{
+			auto tmp=Py_BuildValue("f",valid[i]);
+			assert(tmp);
+			PyList_Append(list2,tmp);
+			Py_DecRef(tmp);
+		}
+		assert(pFunc);
+		PyObject* result=PyObject_CallFunction(pFunc,"(OOi)",list1,list2,applyDir);
+		assert(result);
+		vector<ftype> res;
+		for(int i=0;i<ActionSize;i++)
+		{
+			PyObject* tmp=PyList_GetItem(result,i);
+			assert(tmp);
+			res.emplace_back(PyFloat_AsDouble(tmp));
+			Py_DecRef(tmp);
+		}
+		Py_DecRef(list1);
+		Py_DecRef(list2);
+		Py_DecRef(result);
+		return res;
 	}
-	// ftype predictWinningRate(int player_id,const GameInfo &info)
-	// {
-	// 	vector<ftype> seq=paddingGameInfo(player_id,info);
-	// 	//to do: using python
-	// }
-	// vector<ftype> getActionProbability(int player_id,const GameInfo &info)
-	// {
-	// 	vector<ftype> p;
-	// 	for(int i=0;i<ActionSize;i++) p.emplace_back(1);
-	// 	return p;
-	// 	//to do: using python
-	// }
 	int randomChoose(const vector<ftype> &v)
 	{
 		assert(v.size());
 		ftype tot=0;
 		for(auto &x:v) tot+=x;
+		assert(tot>1e-6);
 		ftype x=uniform_real_distribution<ftype>(0,tot)(rng);
+		int ch=-1;
 		for(int i=0;i<(int)v.size();i++)
 		{
 			if(x<v[i]) return i;
 			x-=v[i];
+			if(v[i]>0) ch=i;
 		}
-		return 0;
+		assert(ch!=-1);
+		return ch;
 	}
-	int convertOp(int player_id,const GameInfo &info,int op,Operation &OP)
+	int convertOp(const Board &board,int op,Operation &OP)
 	{
+		int player_id=board.player_id;
+		auto info=board.info;
 		if(op<=0) return true;
 		op--;
 		assert(op<=towerPos[player_id].size()*4);
@@ -196,8 +232,8 @@ namespace MyAI
 	}
 
 	Board m_board[M+5];
-	ftype Ns[M+5],Psa[M+5][ActionSize+5],s_val[M+5],valid[M+5][ActionSize+5];
-	int go[M+5][ActionSize+5];
+	ftype Ns[M+5],Psa[M+5][ActionSize+5],s_val[M+5];
+	int go[M+5][ActionSize+5],valid[M+5][ActionSize+5];
 
 	void initNode(int x,const Board &board)
 	{
@@ -206,7 +242,7 @@ namespace MyAI
 		memset(Psa[x],0,sizeof(Psa[x]));
 		memset(go[x],-1,sizeof(go[x]));
 		for(int i=0;i<ActionSize;i++) valid[x][i]=board.isValid(i);
-		vector<ftype> vec=predictPY(board,x==0);
+		vector<ftype> vec=predictPY(board,valid[x],x==0);
 		s_val[x]=vec[0];
 		for(int i=0;i<ActionSize;i++) Psa[x][i]=vec[i+1];
 	}
@@ -247,28 +283,67 @@ namespace MyAI
 		board.player_id=player_id;
 		board.info=info;
 		int rt=-1;
-		for(int i=0;i<M;i++)
+		for(int i=0;i<M+1;i++)
 		{
 			mcts(rt,board,i);
 		}
 
-		// vector<ftype> p=getActionProbability(player_id,info);
-		// Operation op;
-		// for(int i=1;i<(int)p.size();i++)
-		// {
-		// 	if(!convertOp(player_id,info,i,op)) p[i]=0;
-		// }
-		// int ch=randomChoose(p);
-		// vector<Operation> res;
-		// if(ch==0) return res;
-		// convertOp(player_id,info,ch,op);
-		// res.emplace_back(op);
-		// return res;
+		vector<ftype> p(ActionSize,0);
+		if(isTraining)
+		{
+			for(int i=0;i<ActionSize;i++)
+			{
+				if(go[rt][i]==-1) p[i]=0;
+				else p[i]=(ftype)Ns[go[rt][i]]/M;
+			}
+			ftype sp=0;
+			for(auto &x:p) sp+=x;
+			assert(abs(sp-1)<1e-6);
+		}
+		else
+		{
+			pair<ftype,int> mx=mp(-1000,-1);
+			for(int i=0;i<ActionSize;i++)
+			{
+				if(go[rt][i]==-1) continue;
+				else mx=max(mx,mp(Ns[go[rt][i]],i));
+			}
+			assert(mx.second!=-1);
+			p[mx.second]=1;
+		}
+
+		int ch=randomChoose(p);
+		Operation op;
+		if(!convertOp(board,ch,op))
+		{
+			assert(ch==0);
+			return vector<Operation>({});
+		}
+		else
+		{
+			return vector<Operation>({op});
+		}
 	}
 }
 
 void init()
 {
+	isTraining=true;
+	Py_Initialize();
+	{
+		PyObject *pModule = PyImport_ImportModule("os");
+		PyObject *pFunc = PyObject_GetAttrString(pModule, "getcwd");
+		PyObject *pArgs = PyTuple_New(0);
+		PyObject *pResult = PyObject_CallObject(pFunc, pArgs);
+		char *cwd;
+		PyArg_Parse(pResult, "s", &cwd);
+		PyRun_SimpleString("import sys");
+		string importDir="sys.path.append('"+(string)(cwd)+"')\n";
+		PyRun_SimpleString(importDir.c_str());
+	}
+	PyObject* file=PyImport_ImportModule("model_predict");
+	PyObject* pFunc=PyObject_GetAttrString(file,"predict");
+
 	tower_id[TowerType::Basic]=1;
 	tower_id[TowerType::Heavy]=2;
 	tower_id[TowerType::Quick]=3;
@@ -319,5 +394,6 @@ void init()
 int main()
 {
 	init();
+	Py_Finalize();
 	return 0;
 }

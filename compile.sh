@@ -1,1 +1,1 @@
-g++ main.cpp -o main -std=c++17 -O2 -lpython3.10
+g++ main.cpp -o main -std=c++17 -O2 -lpython3.10 -I "/usr/include/python3.10"
