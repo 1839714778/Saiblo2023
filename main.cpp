@@ -23,13 +23,75 @@ struct Board
 {
 	GameInfo info;
 	int player_id;
-	bool isValid(int x)const
+	GameState gameState;
+	int convertToOperation(int op,Operation &OP)const{
+		if(op<=0) return true;
+		op--;
+		assert(op<=towerPos[player_id].size()*4);
+		int x=towerPos[player_id][op/4].first;
+		int y=towerPos[player_id][op/4].second;
+		int type=op%4;
+		int found_type=0,found_id;
+		for(auto &tower:info.all_towers())
+		{
+			if(tower.player!=player_id) continue;
+			if(tower.x!=x || tower.y!=y) continue;
+			found_type=tower_id[tower.type];
+			found_id=tower.id;
+		}
+		if(type==0)
+		{
+			if(found_type==0) return false;
+			else
+			{
+				OP=Operation(OperationType::DowngradeTower,found_id,-1);
+				if(!info.is_operation_valid(player_id,OP)) return false;
+				return true;
+			}
+		}
+		else
+		{
+			if(found_type>=5) return false;
+			else
+			{
+				if(found_type==0)
+				{
+					OP=Operation(OperationType::BuildTower,x,y);
+					if(!info.is_operation_valid(player_id,OP)) return false;
+					return true;
+				}
+				else
+				{
+					OP=Operation(OperationType::UpgradeTower,found_id,id_tower[found_type*3+type-2]);
+					if(!info.is_operation_valid(player_id,OP)) return false;
+					return true;
+				}
+			}
+		}
+	}
+	int isValid(int x)const
 	{
-
+		Operation tmp;
+		return convertToOperation(x,tmp);
 	}
 	Board getMove(int x)const
 	{
-
+		Operation op;
+		Board board(*this);
+		Simulator s(board.info);
+		if(convertToOperation(x,op)) 
+		{
+			s.add_operation_of_player(board.player_id,op);
+			s.apply_operations_of_player(board.player_id);
+		}
+		else
+		{
+			//do nothing
+		}
+		if(board.player_id==1) board.gameState=s.next_round();
+		board.info=s.get_info();
+		board.player_id^=1;
+		return board;
 	}
 };
 
@@ -121,14 +183,6 @@ namespace MyAI
 
 		return vec;
 	}
-	PyObject* listFromVector(const vector<ftype> &v)
-	{
-		PyObject* list=PyList_New(0);
-		for(auto &x:v)
-		{
-			PyList_Append(list,Py_BuildValue("d",x));
-		}
-	}
 	vector<ftype> predictPY(const Board &board,int valid[],int applyDir)
 	{
 		vector<ftype> seq=paddingBoard(board);
@@ -182,55 +236,6 @@ namespace MyAI
 		assert(ch!=-1);
 		return ch;
 	}
-	int convertOp(const Board &board,int op,Operation &OP)
-	{
-		int player_id=board.player_id;
-		auto info=board.info;
-		if(op<=0) return true;
-		op--;
-		assert(op<=towerPos[player_id].size()*4);
-		int x=towerPos[player_id][op/4].first;
-		int y=towerPos[player_id][op/4].second;
-		int type=op%4;
-		int found_type=0,found_id;
-		for(auto &tower:info.all_towers())
-		{
-			if(tower.player!=player_id) continue;
-			if(tower.x!=x || tower.y!=y) continue;
-			found_type=tower_id[tower.type];
-			found_id=tower.id;
-		}
-		if(type==0)
-		{
-			if(found_type==0) return false;
-			else
-			{
-				OP=Operation(OperationType::DowngradeTower,found_id,-1);
-				if(!info.is_operation_valid(player_id,OP)) return false;
-				return true;
-			}
-		}
-		else
-		{
-			if(found_type>=5) return false;
-			else
-			{
-				if(found_type==0)
-				{
-					OP=Operation(OperationType::BuildTower,x,y);
-					if(!info.is_operation_valid(player_id,OP)) return false;
-					return true;
-				}
-				else
-				{
-					OP=Operation(OperationType::UpgradeTower,found_id,id_tower[found_type*3+type-2]);
-					if(!info.is_operation_valid(player_id,OP)) return false;
-					return true;
-				}
-			}
-		}
-	}
-
 	Board m_board[M+5];
 	ftype Ns[M+5],Psa[M+5][ActionSize+5],s_val[M+5];
 	int go[M+5][ActionSize+5],valid[M+5][ActionSize+5];
@@ -314,7 +319,7 @@ namespace MyAI
 
 		int ch=randomChoose(p);
 		Operation op;
-		if(!convertOp(board,ch,op))
+		if(!board.convertToOperation(ch,op))
 		{
 			assert(ch==0);
 			return vector<Operation>({});
