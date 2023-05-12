@@ -1,3 +1,3 @@
 import numpy as np
-s=np.random.dirichlet([0.03] * 133)
+s=np.random.dirichlet([1,1,1,1,1],1)
 print(s)

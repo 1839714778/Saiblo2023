@@ -612,7 +612,7 @@ struct Tower
 struct Base
 {
     // Attributes
-    const int player, x, y;
+    int player, x, y;
     int hp;
     int gen_speed_level; ///< Level of production speed
     int ant_level;       ///< Level of produced ants
@@ -624,6 +624,14 @@ struct Base
     Base(int player)
         : player(player), x(POSITION[player][0]), y(POSITION[player][1]), hp(MAX_HP),
           gen_speed_level(0), ant_level(0) {}
+    Base(){}
+    Base& operator = (const Base &base)
+    {
+        player=base.player;x=base.x;y=base.y;
+        hp=base.hp;
+        gen_speed_level=base.gen_speed_level;ant_level=base.ant_level;
+        return (*this);
+    }
 
     /**
      * @brief Try to generate a new ant.

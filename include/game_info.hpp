@@ -1,3 +1,4 @@
+#include <string.h>
 /**
  * @file game_info.hpp
  * @author Jingxuan Liu, Yufei li
@@ -37,6 +38,19 @@ struct GameInfo
     
     int next_ant_id;                                ///< ID of the next generated ant.
     int next_tower_id;                              ///< ID of the next built tower.
+    GameInfo& operator=(const GameInfo &info)
+    {
+        round=info.round;
+        towers=info.towers;
+        ants=info.ants;
+        bases[0]=info.bases[0];bases[1]=info.bases[1];
+        coins[0]=info.coins[0];coins[1]=info.coins[1];
+        memcpy(pheromone,info.pheromone,sizeof(info.pheromone));
+        memcpy(super_weapon_cd,info.super_weapon_cd,sizeof(info.super_weapon_cd));
+        next_ant_id=info.next_ant_id;
+        next_tower_id=info.next_tower_id;
+        return (*this);
+    }
 
     GameInfo(unsigned long long seed)
         : round(0), bases{Base(0), Base(1)}, coins{COIN_INIT, COIN_INIT},
@@ -49,6 +63,7 @@ struct GameInfo
                 for(int k = 0; k < MAP_SIZE; k++)
                     pheromone[i][j][k] = random.get() * std::pow(2, -46) + 8;
     }
+	GameInfo(){}
 
     /* Getters */
 
