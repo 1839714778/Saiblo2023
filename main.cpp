@@ -6,7 +6,6 @@
 #define pii pair<int,int>
 using namespace std;
 const int N=MAP_SIZE;
-const int ACTION_SIZE=133;
 
 int tower[N][N];
 int ant_max_hp[2][N][N];
@@ -17,9 +16,26 @@ auto seed=chrono::steady_clock().now().time_since_epoch().count();
 mt19937 rng(seed);
 vector<pii> towerPos[2];
 
+struct Board
+{
+	GameInfo info;
+	int player_id;
+	bool isValid(int x)const
+	{
+
+	}
+	Board getMove(int x)const
+	{
+
+	}
+};
+
 namespace MyAI
 {
 	using ftype=double;
+	const int ActionSize=133;
+	const int M=50;
+	const ftype cpuct=1;
 	vector<ftype> paddingGameInfo(int player_id,const GameInfo &info)
 	{
 		memset(tower,0,sizeof(tower));
@@ -100,18 +116,22 @@ namespace MyAI
 
 		return vec;
 	}
-	ftype predictWinningRate(int player_id,const GameInfo &info)
+	vector<ftype> predictInfo(const GameInfo &info,int applyDir)
 	{
-		vector<ftype> seq=paddingGameInfo(player_id,info);
-		//to do: using python
+
 	}
-	vector<ftype> getActionProbability(int player_id,const GameInfo &info)
-	{
-		vector<ftype> p;
-		for(int i=0;i<ACTION_SIZE;i++) p.emplace_back(1);
-		return p;
-		//to do: using python
-	}
+	// ftype predictWinningRate(int player_id,const GameInfo &info)
+	// {
+	// 	vector<ftype> seq=paddingGameInfo(player_id,info);
+	// 	//to do: using python
+	// }
+	// vector<ftype> getActionProbability(int player_id,const GameInfo &info)
+	// {
+	// 	vector<ftype> p;
+	// 	for(int i=0;i<ActionSize;i++) p.emplace_back(1);
+	// 	return p;
+	// 	//to do: using python
+	// }
 	int randomChoose(const vector<ftype> &v)
 	{
 		assert(v.size());
@@ -172,25 +192,75 @@ namespace MyAI
 		}
 	}
 
-	const int ActionSize=133;
-	const int M=50;
-	GameInfo m_info[M+5];
-	ftype Q[M+5],N[M+5],U[M+5],P[M+5][ActionSize+5],go[M+5][ActionSize+5];
+	Board m_board[M+5];
+	ftype Ns[M+5],Psa[M+5][ActionSize+5],s_val[M+5],valid[M+5][ActionSize+5];
+	int go[M+5][ActionSize+5];
 
-	vector<Operation> solve(int player_id,GameInfo info)
+	void initNode(int x,const Board &board)
 	{
-		vector<ftype> p=getActionProbability(player_id,info);
-		Operation op;
-		for(int i=1;i<(int)p.size();i++)
+		m_board[x]=board;
+		Ns[x]=0;
+		memset(Psa[x],0,sizeof(Psa[x]));
+		memset(go[x],-1,sizeof(go[x]));
+		for(int i=0;i<ActionSize;i++) valid[x][i]=board.isValid(i);
+		vector<ftype> vec=predictPY(board,x==0);
+		s_val[x]=vec[0];
+		for(int i=0;i<ActionSize;i++) Psa[x][i]=vec[i+1];
+	}
+
+	ftype mcts(int &x,const Board &board,int id,int depth=0)
+	{
+		if(x==-1)
 		{
-			if(!convertOp(player_id,info,i,op)) p[i]=0;
+			x=id;
+			initNode(x,board);
+			Ns[x]++;
+			return -s_val[x];
 		}
-		int ch=randomChoose(p);
-		vector<Operation> res;
-		if(ch==0) return res;
-		convertOp(player_id,info,ch,op);
-		res.emplace_back(op);
-		return res;
+
+		pair<ftype,int> ch=mp(-100,-1);
+		for(int i=0;i<ActionSize;i++)
+		{
+			if(!valid[x][i]) continue;
+			int u=go[x][i];
+			ftype qsa=(u==-1?0:s_val[u]/Ns[x]);
+			ftype usa=cpuct*Psa[x][i]*sqrt(Ns[x])/(u==-1?1:Ns[u]+1);
+			ch=max(ch,mp(qsa+usa,i));
+		}
+		assert(ch.second!=-1);
+
+		ftype t;
+		if(go[x][ch.second]==-1) t=mcts(go[x][ch.second],board.getMove(ch.second),id,depth+1);
+		else t=mcts(go[x][ch.second],m_board[go[x][ch.second]],id,depth+1);
+
+		Ns[x]++;
+		s_val[x]+=t;
+		return -t;
+	}
+
+	vector<Operation> solve(int player_id,const GameInfo &info)
+	{
+		Board board;
+		board.player_id=player_id;
+		board.info=info;
+		int rt=-1;
+		for(int i=0;i<M;i++)
+		{
+			mcts(rt,board,i);
+		}
+
+		// vector<ftype> p=getActionProbability(player_id,info);
+		// Operation op;
+		// for(int i=1;i<(int)p.size();i++)
+		// {
+		// 	if(!convertOp(player_id,info,i,op)) p[i]=0;
+		// }
+		// int ch=randomChoose(p);
+		// vector<Operation> res;
+		// if(ch==0) return res;
+		// convertOp(player_id,info,ch,op);
+		// res.emplace_back(op);
+		// return res;
 	}
 }
 
