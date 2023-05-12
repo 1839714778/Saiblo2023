@@ -2,6 +2,7 @@
 #include "include/template.hpp"
 #include "include/common.hpp"
 #include <bits/stdc++.h>
+#include <Python.h>
 #define mp make_pair
 #define pii pair<int,int>
 using namespace std;
@@ -35,6 +36,7 @@ namespace MyAI
 	using ftype=double;
 	const int ActionSize=133;
 	const int M=50;
+	const ftype dirArg=0.3;
 	const ftype cpuct=1;
 	vector<ftype> paddingGameInfo(int player_id,const GameInfo &info)
 	{
@@ -116,8 +118,9 @@ namespace MyAI
 
 		return vec;
 	}
-	vector<ftype> predictInfo(const GameInfo &info,int applyDir)
+	vector<ftype> predictInfo(const Board &board,int applyDir)
 	{
+		vector<ftype> seq=paddingBoard(board);
 
 	}
 	// ftype predictWinningRate(int player_id,const GameInfo &info)
@@ -315,7 +318,6 @@ void init()
 
 int main()
 {
-	cerr<<sizeof(GameInfo)<<endl;
 	init();
 	return 0;
 }
