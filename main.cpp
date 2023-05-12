@@ -171,6 +171,12 @@ namespace MyAI
 			}
 		}
 	}
+
+	const int ActionSize=133;
+	const int M=50;
+	GameInfo m_info[M+5];
+	ftype Q[M+5],N[M+5],U[M+5],P[M+5][ActionSize+5],go[M+5][ActionSize+5];
+
 	vector<Operation> solve(int player_id,GameInfo info)
 	{
 		vector<ftype> p=getActionProbability(player_id,info);
@@ -239,6 +245,7 @@ void init()
 
 int main()
 {
+	cerr<<sizeof(GameInfo)<<endl;
 	init();
 	return 0;
 }
