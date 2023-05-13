@@ -1,0 +1,19 @@
+#ifndef _SELF_COMPLEX
+#define _SELF_COMPLEX 1
+#include <self/operator>
+struct Complex
+{
+	double x,y;
+	Complex():x(0),y(0){}
+	Complex(const double &_x,const double &_y):x(_x),y(_y){}
+};
+ostream & operator << (ostream &cout,const Complex &x)
+{
+	cout<<mp(x.x,x.y);
+	return cout;
+}
+inline Complex operator + (const Complex &a,const Complex &b){return Complex(a.x+b.x,a.y+b.y);}
+inline Complex operator - (const Complex &a,const Complex &b){return Complex(a.x-b.x,a.y-b.y);}
+inline Complex operator * (const Complex &a,const Complex &b){return Complex(a.x*b.x-a.y*b.y,a.x*b.y+a.y*b.x);}
+inline Complex conjunc(const Complex &x) {return Complex(x.x,-x.y);}
+#endif

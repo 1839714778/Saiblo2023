@@ -1,0 +1,137 @@
+#ifndef _SELF_VS
+#define _SELF_VS 1
+#include <self/utility>
+using namespace std;
+template <size_t T>
+bool operator < (bitset <T> a,bitset <T> b)
+{
+	for(int i=T-1;i>=0;i--)
+	{
+		if(a[i]!=b[i]) return a[i]<b[i];
+	}
+	return false;
+}
+
+template <int T>
+struct XorSpace
+{
+	vector <bitset <T> > bases;
+	vector <int> baseIDs;
+	map <int,int> toXSID;
+	vector <vector<int> > trace;
+	int freeNum=0;
+	int recordTrace=-1;
+	void clear()
+	{
+		recordTrace=-1;
+		freeNum=0;
+		trace.clear();
+		toXSID.clear();
+		baseIDs.clear();
+		bases.clear();
+	}
+	void error(string str)
+	{
+		cout<<str<<endl;
+		exit(0);
+	}
+	void add(bitset <T> x)
+	{
+		if(recordTrace==1) error("You've ordered 'Record Trace' function, which is incompatible with single parameter function 'add'");
+		recordTrace=0;
+		for(auto &basis:bases)
+		{
+			chmin(x,x^basis);
+		}
+		if(x==0)
+		{
+			freeNum++;
+			return;
+		}
+		else bases.push_back(x);
+	}
+	vector <int> expandTrace(vector <int> v)
+	{
+		vector <int> t;
+		for(auto x:v)
+		{
+			for(auto u:trace[x])
+			{
+				t.push_back(u);
+			}
+		}
+		vector <int> res;
+		sort(all(t));
+		for(int i=0,j=0;i<t.size();i=j)
+		{
+			for(j=i;j<t.size();j++)
+			{
+				if(t[i]!=t[j]) break;
+			}
+			if((j-i)&1) res.push_back(t[i]);
+		}
+		return res;
+	}
+	void add(bitset <T> x,int id)
+	{
+		vector <int> tmp;
+		if(recordTrace==0) error("You've ordered 'Record Trace' function, which is incompatible with single parameter function 'add'");
+		recordTrace=true;
+		for(int i=0;i<bases.size();i++)
+		{
+			bitset <T> bit=bases[i]^x;
+			if(bit<x)
+			{
+				x=bit;
+				tmp.push_back(i);
+			}
+		}
+		if(x==0)
+		{
+			freeNum++;
+			return;
+		}
+		else
+		{
+			bases.push_back(x);
+			toXSID[id]=baseIDs.size();
+			baseIDs.push_back(id);
+			vector <int> t;
+			trace.push_back(expandTrace(tmp));
+			trace.back().push_back((int)baseIDs.size()-1);
+		}
+	}
+	bool query(bitset <T> x)
+	{
+		for(auto &basis:bases)
+		{
+			chmin(x,x^basis);
+		}
+		return (x==0);
+	}
+	pair<int,vector <int> > queryWithID(bitset <T> x)
+	{
+		if(recordTrace==0)
+		{
+			error("You've ordered 'Query With ID' function, which needs 'Record Trace' function opening");
+		}
+		bitset <T> tmp;
+		vector <int> res;
+		for(int i=0;i<bases.size();i++)
+		{
+			tmp=bases[i]^x;
+			if(tmp<x)
+			{
+				x=tmp;
+				res.push_back(i);
+			}
+		}
+		res=expandTrace(res);
+		for(auto &x:res)
+		{
+			x=baseIDs[x];
+		}
+		return mp((x==0),res);
+	}
+};
+#endif

@@ -1,0 +1,123 @@
+#ifndef __SELF_COUNT2D
+#define _SELF_COUNT2D 1
+namespace Count2D
+{
+    template <typename T>
+    struct FenwickTree
+    {
+        const T E=0;
+        T *bit;
+        int nn;
+        inline void init(int n)
+        {
+            n++;
+            nn=1;
+            while(nn<n) nn<<=1;
+            bit=new T[nn+5];
+            for(int i=0;i<=nn;i++)
+            {
+                bit[i]=0;
+            }
+        }
+        inline void clear(int n)
+        {
+            nn=1;
+            while(nn<n) nn<<=1;
+            for(int i=0;i<=nn;i++)
+            {
+                bit[i]=0;
+            }
+        }
+        inline void add(int x,T delta)
+        {
+            x++;
+            while(x<=nn)
+            {
+                bit[x]+=delta;
+                x+=x&-x;
+            }
+        }
+        inline T query(int x)
+        {
+            x++;
+            T res=E;
+            while(x)
+            {
+                res+=bit[x];
+                x&=x-1;
+            }
+            return res;
+        }
+        inline T query(int l,int r)//[]
+        {
+            return query(r)-(l>1?query(l-1):0);
+        }
+        ~FenwickTree()
+        {
+            delete bit;
+        }
+    };
+    struct Point
+    {
+        int x,y;
+        Point(int x,int y):x(x),y(y){}
+    };
+    struct Query
+    {
+        int x,y,id;
+        Query(int x,int y,int id):x(x),y(y),id(id){}
+    };
+    template <typename Point,typename Query>
+    inline vector <int> count2D(vector <Point> points,vector <Query> queries)
+    {
+        vector <int> res;
+        int maxID=0;
+        for(auto &query:queries)
+        {
+            chmax(maxID,query.id);
+        }
+        res.resize(maxID+1);
+        FenwickTree <int> bit;
+        sort(all(points),[](const Point &a,const Point &b)
+        {
+            return a.x<b.x;
+        });
+        sort(all(queries),[](const Query &a,const Query &b)
+        {
+            return a.x<b.x;
+        });
+        int my=-1;
+        for(int i=0;i<(int)points.size();i++) chmax(my,points[i].y);
+        for(int i=0;i<(int)queries.size();i++) chmax(my,queries[i].y);
+        bit.init(my);
+        int n=queries.size(),m=points.size();
+        // debug(points.size());
+        // for(int i=0;i<(int)points.size();i++)
+        // {
+        //     cout<<points[i].x<<','<<points[i].y<<endl;
+        // }
+        // cout<<endl;
+        // for(int i=0;i<(int)queries.size();i++)
+        // {
+        //     cout<<queries[i].x<<','<<queries[i].y<<endl;
+        // }
+        // cout<<endl;
+        // debug(my,m);
+        for(int i=0,j=0;i<n;i++)
+        {
+            // debug(i,j);
+            while(j<m && points[j].x<=queries[i].x)
+            {
+                // debug(points[j].y);
+                bit.add(points[j].y,1);
+                j++;
+            }
+            // debug(queries[i].y);
+            // if(queries[i].id<=3) cout<<queries[j].y<<'$'<<bit.query(queries[i].y)<<endl;
+            // if(queries[i].id<=2) cout<<"qd="<<bit.query(queries[j].y)<<endl;
+            res[queries[i].id]=bit.query(queries[i].y);
+        }
+        return res;
+    }
+}
+#endif 

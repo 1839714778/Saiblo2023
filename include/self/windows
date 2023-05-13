@@ -1,0 +1,532 @@
+#include <windows.h>
+#define KEY_DOWN(VK_NONAME) ((GetAsyncKeyState(VK_NONAME) & 0x8000) ? 1:0)
+
+char* readClipBoard()
+{
+	HWND hWnd=NULL;
+	OpenClipboard(hWnd);
+	char *p=0;
+	if (IsClipboardFormatAvailable(CF_TEXT))
+	{
+		HANDLE h = GetClipboardData(CF_TEXT);
+		p=(char*)GlobalLock(h);
+		GlobalUnlock(h);
+	}
+	CloseClipboard();
+	return p;
+}
+
+void writeClipBoard(char *p)
+{
+	HWND hWnd = NULL;
+	OpenClipboard(hWnd);
+	EmptyClipboard();
+	HANDLE hHandle=GlobalAlloc(GMEM_FIXED,strlen(p)+1);
+	char* pData =(char*)GlobalLock(hHandle);
+	strcpy(pData,p);
+	SetClipboardData(CF_TEXT, hHandle);
+	GlobalUnlock(hHandle);
+	CloseClipboard();
+}
+
+void writeClipBoard(string str)
+{
+	char buf[str.size()+1];
+	int sz=0;
+	for(auto ch:str)
+	{
+		buf[sz++]=ch;
+	}
+	buf[sz]='\0';
+	writeClipBoard(buf);
+}
+
+void setcon(int line,int col)
+{
+	char buf[105];
+	sprintf(buf,"mode con cols=%d lines=%d",col,line);
+	system(buf);
+}
+
+void printcol(int color,int background=0)
+{
+	//0 black
+	//1 vielet
+	//2 orange
+	//3 pink
+	//4 red
+	//5 purple
+	//6 green
+	//7 normal color
+	//8 grey
+	//9 blue
+	//10 yellow
+	//11 white
+	//12 orange
+	//13 light blue
+	//14 bright yellow
+	//15 white
+	//���4��bit��������ɫǰ��4��bit�Ǳ�����ɫ 
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE),(background<<4)+color);
+}
+
+void movecursor(int x,int y)
+{
+    HANDLE hout;
+    COORD coord;
+    coord.X=y;
+    coord.Y=x;
+    hout=GetStdHandle(STD_OUTPUT_HANDLE);
+    SetConsoleCursorPosition(hout,coord);
+}
+
+struct Position
+{
+	int X;
+	int Y;
+};
+
+void getmouse(Position &x)
+{
+	POINT pos;
+	GetCursorPos(&pos);
+	x.X=pos.x;
+	x.Y=pos.y;
+}
+
+void setmouse(int x,int y)
+{
+	SetCursorPos(x,y);
+}
+
+void setmouse(Position &x)
+{
+	SetCursorPos(x.X,x.Y);
+}
+
+void movecursor(Position x)
+{
+	movecursor(x.X,x.Y);
+}
+
+Position getpos()
+{
+    HWND h=GetForegroundWindow();
+    POINT pt;
+    GetCursorPos(&pt);
+    ScreenToClient(h,&pt);
+    return {pt.y/20,pt.x/10};
+}
+
+Position waitclick()
+{
+	while(!KEY_DOWN(VK_LBUTTON));
+	return getpos();
+}
+#define UP 30
+#define DOWN 31
+#define LEFT 17
+#define RIGHT 16
+#define DEGREE 208
+void press(int c)
+{
+	switch(c)//digit
+	{
+		case '0':
+		    keybd_event(VK_NUMPAD0,0,0,0);
+		    keybd_event(VK_NUMPAD0,0,2,0);
+		    break;
+		case '1':
+		    keybd_event(VK_NUMPAD1,0,0,0);
+		    keybd_event(VK_NUMPAD1,0,2,0);
+		    break;
+		case '2':
+		    keybd_event(VK_NUMPAD2,0,0,0);
+		    keybd_event(VK_NUMPAD2,0,2,0);
+		    break;
+		case '3':
+		    keybd_event(VK_NUMPAD3,0,0,0);
+		    keybd_event(VK_NUMPAD3,0,2,0);
+		    break;
+		case '4':
+		    keybd_event(VK_NUMPAD4,0,0,0);
+		    keybd_event(VK_NUMPAD4,0,2,0);
+		    break;
+		case '5':
+		    keybd_event(VK_NUMPAD5,0,0,0);
+		    keybd_event(VK_NUMPAD5,0,2,0);
+		    break;
+		case '6':
+		    keybd_event(VK_NUMPAD6,0,0,0);
+		    keybd_event(VK_NUMPAD6,0,2,0);
+		    break;
+		case '7':
+		    keybd_event(VK_NUMPAD7,0,0,0);
+		    keybd_event(VK_NUMPAD7,0,2,0);
+		    break;
+		case '8':
+		    keybd_event(VK_NUMPAD8,0,0,0);
+		    keybd_event(VK_NUMPAD8,0,2,0);
+		    break;
+		case '9':
+		    keybd_event(VK_NUMPAD9,0,0,0);
+		    keybd_event(VK_NUMPAD9,0,2,0);
+		    break;
+	}
+	switch(c)//lower case
+	{
+		case 'a':
+		    keybd_event('A',0,0,0);
+		    keybd_event('A',0,2,0);
+		    break;
+		case 'b':
+		    keybd_event('B',0,0,0);
+		    keybd_event('B',0,2,0);
+		    break;
+		case 'c':
+		    keybd_event('C',0,0,0);
+		    keybd_event('C',0,2,0);
+		    break;
+		case 'd':
+		    keybd_event('D',0,0,0);
+		    keybd_event('D',0,2,0);
+		    break;
+		case 'e':
+		    keybd_event('E',0,0,0);
+		    keybd_event('E',0,2,0);
+		    break;
+		case 'f':
+		    keybd_event('F',0,0,0);
+		    keybd_event('F',0,2,0);
+		    break;
+		case 'g':
+		    keybd_event('G',0,0,0);
+		    keybd_event('G',0,2,0);
+		    break;
+		case 'h':
+		    keybd_event('H',0,0,0);
+		    keybd_event('H',0,2,0);
+		    break;
+		case 'i':
+		    keybd_event('I',0,0,0);
+		    keybd_event('I',0,2,0);
+		    break;
+		case 'j':
+		    keybd_event('J',0,0,0);
+		    keybd_event('J',0,2,0);
+		    break;
+		case 'k':
+		    keybd_event('K',0,0,0);
+		    keybd_event('K',0,2,0);
+		    break;
+		case 'l':
+		    keybd_event('L',0,0,0);
+		    keybd_event('L',0,2,0);
+		    break;
+		case 'm':
+		    keybd_event('M',0,0,0);
+		    keybd_event('M',0,2,0);
+		    break;
+		case 'n':
+		    keybd_event('N',0,0,0);
+		    keybd_event('N',0,2,0);
+		    break;
+		case 'o':
+		    keybd_event('O',0,0,0);
+		    keybd_event('O',0,2,0);
+		    break;
+		case 'p':
+		    keybd_event('P',0,0,0);
+		    keybd_event('P',0,2,0);
+		    break;
+		case 'q':
+		    keybd_event('Q',0,0,0);
+		    keybd_event('Q',0,2,0);
+		    break;
+		case 'r':
+		    keybd_event('R',0,0,0);
+		    keybd_event('R',0,2,0);
+		    break;
+		case 's':
+		    keybd_event('S',0,0,0);
+		    keybd_event('S',0,2,0);
+		    break;
+		case 't':
+		    keybd_event('T',0,0,0);
+		    keybd_event('T',0,2,0);
+		    break;
+		case 'u':
+		    keybd_event('U',0,0,0);
+		    keybd_event('U',0,2,0);
+		    break;
+		case 'v':
+		    keybd_event('V',0,0,0);
+		    keybd_event('V',0,2,0);
+		    break;
+		case 'w':
+		    keybd_event('W',0,0,0);
+		    keybd_event('W',0,2,0);
+		    break;
+		case 'x':
+		    keybd_event('X',0,0,0);
+		    keybd_event('X',0,2,0);
+		    break;
+		case 'y':
+		    keybd_event('Y',0,0,0);
+		    keybd_event('Y',0,2,0);
+		    break;
+		case 'z':
+		    keybd_event('Z',0,0,0);
+		    keybd_event('Z',0,2,0);
+		    break;
+	}
+	switch(c)//upper case
+	{
+		case 'A':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('A',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('A',0,2,0);
+		    break;
+		case 'B':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('B',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('B',0,2,0);
+		    break;
+		case 'C':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('C',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('C',0,2,0);
+		    break;
+		case 'D':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('D',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('D',0,2,0);
+		    break;
+		case 'E':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('E',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('E',0,2,0);
+		    break;
+		case 'F':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('F',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('F',0,2,0);
+		    break;
+		case 'G':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('G',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('G',0,2,0);
+		    break;
+		case 'H':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('H',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('H',0,2,0);
+		    break;
+		case 'I':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('I',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('I',0,2,0);
+		    break;
+		case 'J':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('J',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('J',0,2,0);
+		    break;
+		case 'K':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('K',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('K',0,2,0);
+		    break;
+		case 'L':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('L',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('L',0,2,0);
+		    break;
+		case 'M':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('M',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('M',0,2,0);
+		    break;
+		case 'N':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('N',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('N',0,2,0);
+		    break;
+		case 'O':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('O',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('O',0,2,0);
+		    break;
+		case 'P':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('P',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('P',0,2,0);
+		    break;
+		case 'Q':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('Q',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('Q',0,2,0);
+		    break;
+		case 'R':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('R',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('R',0,2,0);
+		    break;
+		case 'S':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('S',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('S',0,2,0);
+		    break;
+		case 'T':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('T',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('T',0,2,0);
+		    break;
+		case 'U':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('U',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('U',0,2,0);
+		    break;
+		case 'V':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('V',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('V',0,2,0);
+		    break;
+		case 'W':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('W',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('W',0,2,0);
+		    break;
+		case 'X':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('X',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('X',0,2,0);
+		    break;
+		case 'Y':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('Y',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('Y',0,2,0);
+		    break;
+		case 'Z':
+		    keybd_event(VK_SHIFT,0,0,0);
+		    keybd_event('Z',0,0,0);
+		    keybd_event(VK_SHIFT,0,2,0);
+		    keybd_event('Z',0,2,0);
+		    break;
+	}
+	switch(c)//control charactor
+	{
+		case '\n':
+			keybd_event(VK_RETURN,0,0,0);
+			keybd_event(VK_RETURN,0,2,0);
+			break;
+		case UP:
+			keybd_event(VK_UP,0,0,0);
+			keybd_event(VK_UP,0,2,0);
+			break;
+		case DOWN:
+			keybd_event(VK_DOWN,0,0,0);
+			keybd_event(VK_DOWN,0,2,0);
+			break;
+		case LEFT:
+			keybd_event(VK_LEFT,0,0,0);
+			keybd_event(VK_LEFT,0,2,0);
+			break;
+		case RIGHT:
+			keybd_event(VK_RIGHT,0,0,0);
+			keybd_event(VK_RIGHT,0,2,0);
+			break;
+	}
+	switch(c)//special charactor
+	{
+		case '+':
+			keybd_event(VK_ADD,0,0,0);
+			keybd_event(VK_ADD,0,2,0);
+			break;
+		case '=':
+			keybd_event(VK_OEM_PLUS,0,0,0);
+			keybd_event(VK_OEM_PLUS,0,2,0);
+			break;
+		case '-':
+			keybd_event(VK_SUBTRACT,0,0,0);
+			keybd_event(VK_SUBTRACT,0,2,0);
+			break;
+		case '_':
+			keybd_event(VK_SHIFT,0,0,0);
+			keybd_event(VK_OEM_MINUS,0,0,0);
+			keybd_event(VK_SHIFT,0,2,0);
+			keybd_event(VK_OEM_MINUS,0,2,0);
+			break;
+		case '(':
+			keybd_event(VK_SHIFT,0,0,0);
+			keybd_event('9',0,0,0);
+			keybd_event(VK_SHIFT,0,2,0);
+			keybd_event('9',0,2,0);
+			break;
+		case ')':
+			keybd_event(VK_SHIFT,0,0,0);
+			keybd_event('0',0,0,0);
+			keybd_event(VK_SHIFT,0,2,0);
+			keybd_event('0',0,2,0);
+			break;
+		case ',':
+			keybd_event(VK_OEM_COMMA,0,0,0);
+			keybd_event(VK_OEM_COMMA,0,2,0);
+			break;
+		case DEGREE:
+			keybd_event(18,0,0,0);
+			keybd_event(VK_NUMPAD0,0,0,0);
+			keybd_event(VK_NUMPAD1,0,0,0);
+			keybd_event(VK_NUMPAD7,0,0,0);
+			keybd_event(VK_NUMPAD6,0,0,0);
+			keybd_event(18,0,2,0);
+			keybd_event(VK_NUMPAD0,0,2,0);
+			keybd_event(VK_NUMPAD1,0,2,0);
+			keybd_event(VK_NUMPAD7,0,2,0);
+			keybd_event(VK_NUMPAD6,0,2,0);
+			break;
+	}
+}
+
+void saystring(std::string s)
+{
+	for(int i=0;i<(int)s.size();i++)
+	{
+		press(s[i]);
+	}
+}
+
+void saystring(char c[])
+{
+	int len=strlen(c);
+	for(int i=0;i<len;i++)
+	{
+		press(c[i]);
+	}
+}
+

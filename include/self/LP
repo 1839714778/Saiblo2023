@@ -1,0 +1,69 @@
+#ifndef _SELF_LP
+#define _SELF_LP
+#include <self/utility>
+struct SystemOfDifferenceConstraints
+{
+	const ll DistInf=llinf;
+	struct Edge
+	{
+		int vertex;
+		ll cost;
+	};
+	int n;
+	vector<vector<Edge> > edges;
+	vector<ll> dist;
+	void init(int _n)
+	{
+		n=_n;
+		edges.clear();
+		edges.resize(n);
+		dist.clear();
+		dist.resize(n);
+	}
+	
+	bool bellmanford(int st=0)
+	{
+		for(int i=0;i<n;i++)
+		{
+			dist[i]=DistInf;
+		}
+		dist[st]=0;
+		int changeCommitted;
+		for(int T=0;T<n;T++)
+		{
+			changeCommitted=0;
+			for(int i=0;i<n;i++)
+			{
+				if(dist[i]==DistInf) continue;
+				assert(dist[i]>=-DistInf);
+				for(auto &e:edges[i])
+				{
+					if(dist[e.vertex]>dist[i]+e.cost)
+					{
+						dist[e.vertex]=dist[i]+e.cost;
+						changeCommitted=true;
+					}
+				}
+			}
+			if(!changeCommitted) break;
+			if(T==n-1) return 0;
+		}
+		return 1;
+	}
+	bool solve(vector<ll>* res=0)
+	{
+		if(!bellmanford()) return 0;
+		if(res) *res=dist;
+		return 1;
+	}
+	void addConstraints(int x,int y,int z,int sgn=0) // x-y(sgn?>=:<=)z
+	{
+		if(sgn)
+		{
+			swap(x,y);
+			z=-z;
+		}
+		edges[y].push_back({x,z});
+	}
+};
+#endif

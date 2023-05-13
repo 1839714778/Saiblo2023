@@ -1,0 +1,54 @@
+namespace HASHTABLE
+{
+	struct HashInt
+	{
+		int operator () (int x)
+		{
+			x^=(x>>13);
+			return x;
+		}
+	};
+}
+
+template <typename Key,typename Value,typename Hash,int N,int mod>
+struct HashTable
+{
+	int head[mod+5];
+	int nxt[N+5];
+	Value val[N+5];
+	Key key[N+5];
+	Hash hash;
+	int cnt;
+	HashTable():cnt(1){}
+	inline bool exist(const Key &k)
+	{
+		int t=hash(k)%mod;
+		for(int i=head[t];i;i=nxt[i])
+		{
+			if(key[i]==k) return true;
+		}
+		return false;
+	}
+	inline Value& at(const Key &k)
+	{
+		int t=hash(k)%mod;
+		for(int i=head[t];i;i=nxt[i])
+		{
+			if(key[i]==k) return val[i];
+		}
+		key[cnt]=k;
+		nxt[cnt]=head[t];
+		head[t]=cnt;
+		assert(cnt<=N);
+		return val[cnt++];
+	}
+	inline Value& operator [] (const Key &k)
+	{
+		return at(k);
+	}
+	inline void clear()
+	{
+		cnt=1;
+		memset(head,0,sizeof(head));
+	}
+};

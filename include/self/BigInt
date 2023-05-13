@@ -1,0 +1,188 @@
+#include <self/utility>
+namespace BIGINT
+{
+	const int mod = 1000000000;
+	const int K = 1000;
+	struct BigInt
+	{
+		int value[K + 1];
+		char buf[K * 9 + 5];
+		BigInt(){memset(value,0,sizeof(value));}
+		BigInt(const char c[], int len)
+		{
+			for (int i = 0; i < K * 9; i++)
+				buf[i] = '0';
+			for (int i = 0; i < K; i++)
+				value[i] = 0;
+			for (int i = 9 * K - len; i < 9 * K; i++)
+				buf[i] = c[i - (9 * K - len)];
+			reverse(buf, buf + K * 9);
+			for (int i = 0; i < K; i++)
+			{
+				for (int j = 0; j < 9; j++)
+				{
+					value[i] = value[i] * 10 + buf[i * 9 + (8 - j)] - '0';
+				}
+			}
+		}
+		BigInt(int _value)
+		{
+			memset(value,0,sizeof(value));
+			int tmp = 0;
+			while (_value)
+			{
+				value[tmp++] = _value % mod;
+				_value /= mod;
+			}
+		}
+		int& operator [] (const int &pos){
+			return value[pos];
+		}
+		const int& operator [] (const int &pos)const{
+			return value[pos];
+		}
+		bool isNegative(void)const{
+			return value[K-1]==mod-1;
+		}
+		void setInf()
+		{
+			for(int i=0;i<K-2;i++) value[i]=mod-1;
+			value[K-2]=mod/4;
+			value[K-1]=0;
+		}
+		BigInt operator - (void)const
+		{
+			BigInt tmp(*this);
+			for(int i=0;i<K;i++)
+			{
+				tmp[i]=mod-1-value[i];
+			}
+			tmp[0]++;
+			for(int i=0;i<K;i++)
+			{
+				if(tmp[i]==mod)
+				{
+					tmp[i]=0;
+					tmp[i+1]++;
+				}
+			}
+			return tmp;
+		}
+		BigInt& operator += (const BigInt &x)
+		{
+			for (int i = 0; i < K; i++)
+			{
+				value[i] += x.value[i];
+				if (value[i] >= mod)
+				{
+					value[i] -= mod;
+					value[i + 1]++;
+				}
+			}
+			return (*this);
+		}
+		BigInt& operator -= (BigInt val){
+			val=-val;
+			return (*this)+=val;
+		}
+		BigInt& operator *= (const int &val)
+		{
+			int jw=0;
+			for(int i=0;i<K;i++)
+			{
+				ll t=1LL*value[i]*val+jw;
+				value[i]=t%mod;
+				jw=t/mod;
+			}
+			return (*this);
+		}
+		BigInt operator + (const BigInt &x)const{
+			return BigInt(*this)+=x;
+		}
+		BigInt operator - (const BigInt &x)const{
+			return BigInt(*this)-=x;
+		}
+		BigInt operator * (const int &val)const{
+			return BigInt(*this)*=val;
+		}
+		bool operator<(const BigInt &x) const &
+		{
+			if(x.value[K-1]!=value[K-1]) return (value[K-1]>x.value[K-1]);
+			for(int i=K-1;i>=0;i--)
+			{
+				if(value[i]!=x.value[i]) return (value[K-1]?value[i]>x.value[i]:value[i]<x.value[i]);
+			}
+			return false;
+		}
+		bool operator > (const BigInt &x)const{
+			return x < (*this);
+		}
+		bool operator <= (const BigInt &x)const{
+			return !(x<(*this));
+		}
+		bool operator >= (const BigInt &x)const{
+			return !(x>(*this));
+		}
+		void print(void)const{
+			BigInt x(*this);
+			if(x.value[K-1]==mod-1)
+			{
+				cout<<'-';
+				x=-x;
+			}
+			int fst=1;
+			for(int i=K-1;i>=0;i--)
+			{
+				if(fst && x.value[i]==0) continue;
+				if(fst)
+				{
+					fst=0;
+					cout<<x.value[i];
+				}
+				else
+				{
+					for(int k=0,j=1;k<10;k++,j*=10)
+					{
+						x.buf[k]=(x.value[i]/j)%10;
+					}
+					for(int j=8;j>=0;j--)
+					{
+						cout<<x.buf[j];
+					}
+				}
+			}
+		}
+	};
+	ostream & operator << (ostream&cout,BigInt x)
+	{
+		if(x.value[K-1]==mod-1)
+		{
+			cout<<'-';
+			x=-x;
+		}
+		int fst=1;
+		for(int i=K-1;i>=0;i--)
+		{
+			if(fst && x.value[i]==0) continue;
+			if(fst)
+			{
+				fst=0;
+				cout<<x.value[i];
+			}
+			else
+			{
+				for(int k=0,j=1;k<10;k++,j*=10)
+				{
+					x.buf[k]=(x.value[i]/j)%10;
+				}
+				for(int j=8;j>=0;j--)
+				{
+					cout<<(char)(x.buf[j]+'0');
+				}
+			}
+		}
+		if(fst) cout<<0;
+		return cout;
+	}
+} // namespace BIGINT
+using BIGINT::BigInt;

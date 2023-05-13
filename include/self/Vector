@@ -1,0 +1,42 @@
+template <typename T>
+struct Vector
+{
+	T a[12];
+	T& operator [] (int x){
+		return a[x];
+	}
+	const T& operator [] (int x)const{
+		return a[x];
+	}
+	inline Vector& operator += (const Vector &oth){
+		for(int i=0;i<d;i++){
+			a[i]+=oth[i];
+		}
+		return (*this);
+	}
+	inline Vector& operator -= (const Vector &oth){
+		for(int i=0;i<d;i++){
+			a[i]-=oth[i];
+		}
+		return (*this);
+	}
+	inline Vector& operator *= (const T &c){
+		for(int i=0;i<d;i++){
+			a[i]*=c;
+		}
+		return (*this);
+	}
+	inline Vector operator + (const Vector &oth)const{
+		return Vector(*this)+=oth;
+	}
+	inline Vector operator * (const T &c)const{
+		return Vector(*this)*=c;
+	}
+};
+template <typename T>
+ostream & operator << (ostream &cout,const Vector<T> &v)
+{
+	vector<T> vec;
+	for(auto x:v) vec.emplace_back(x);
+	return vec;
+}

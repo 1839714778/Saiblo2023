@@ -1,0 +1,164 @@
+#ifndef SELF_MODINT
+#define SELF_MODINT 1
+#include <self/utility>
+template <int mod>
+struct ModInt
+{
+	int x;
+	ModInt(){x=0;}
+	ModInt(const int &_x){x=_x%mod;if(x<0) x+=mod;}
+	ModInt(const ll &_x){x=_x%mod;if(x<0) x+=mod;}
+	ModInt <mod>& operator ++()// prefix
+	{
+		++x;
+		if(x==mod) x=0;
+		return *this;
+	}
+	ModInt <mod> operator ++(int)
+	{
+		int t=x;
+		x++;
+		if(x==mod) x=0;
+		return t;
+	}
+	ModInt <mod>& operator --()// prefix
+	{
+		--x;
+		if(x==-1) x+=mod;
+		return *this;
+	}
+	ModInt <mod> operator --(int)
+	{
+		int t=x;
+		x--;
+		if(x==-1) x+=mod;
+		return t;
+	}
+	ModInt <mod> operator -()const
+	{
+		return ModInt <mod>((x==0?0:mod-x));
+	}
+};
+
+template <int mod>
+inline ModInt<mod> operator * (const ModInt<mod> &a,const int &c)
+{
+	return 1LL*a.x*c%mod;
+}
+
+template <int mod>
+inline int mabs(const ModInt <mod> &a)
+{
+	return a.x;
+}
+
+template <int mod>
+bool operator == (const ModInt <mod> &a,const ModInt <mod> &b)
+{
+	return a.x==b.x;
+}
+
+template <int mod>
+bool operator != (const ModInt <mod> &a,const ModInt <mod> &b)
+{
+	return (a.x!=b.x);
+}
+
+template <int mod>
+inline ModInt <mod> operator + (const ModInt <mod> &a,const ModInt <mod> &b)
+{
+	int tmp=a.x+b.x;
+	if(tmp>=mod) tmp-=mod;
+	return tmp;
+}
+
+template <int mod>
+inline ModInt <mod> operator - (const ModInt <mod> &a,const ModInt <mod> &b)
+{
+	int tmp=a.x-b.x;
+	if(tmp<0) tmp+=mod;
+	return tmp;
+}
+
+template <int mod>
+inline void operator -= (ModInt <mod> &a,const ModInt <mod> &b)
+{
+	a.x-=b.x;
+	a.x+=(a.x>>31&mod);
+}
+
+template <int mod>
+inline ModInt <mod> operator * (const ModInt <mod> &a,const ModInt <mod> &b)
+{
+	return 1LL*a.x*b.x%mod;
+}
+
+template <int mod>
+inline void operator *= (ModInt <mod> &a,const ModInt <mod> &b)
+{
+	a.x=1LL*a.x*b.x%mod;
+}
+
+template <int mod>
+inline void operator += (ModInt <mod> &a,const ModInt <mod> &b)
+{
+	a.x+=b.x;
+	if(a.x>=mod) a.x-=mod;
+}
+
+template <int mod>
+inline ModInt <mod> mod_inv(ModInt <mod> x)
+{
+	int m=mod-2;
+	ModInt <mod> basic=x;
+	x=1;
+	while(m)
+	{
+		if(m&1) x*=basic;
+		m>>=1;
+		basic*=basic;
+	}
+	return x;
+}
+
+template <int mod>
+ModInt <mod> operator / (const ModInt <mod> &a,const ModInt <mod> &b)
+{
+	return a*mod_inv(b);
+}
+
+template <int mod>
+void operator /= (ModInt <mod> &a,const ModInt <mod> &b)
+{
+	a=a/b;
+}
+
+template <int mod>
+inline ModInt <mod> operator ^ (const ModInt <mod> &basic,int x)
+{
+	ModInt <mod> res=1;
+	while(x)
+	{
+		if(x&1)	res*=basic;
+		basic*=basic;
+		x>>=1;
+	}
+	return res;
+}
+
+template <int mod>
+istream & operator >> (istream &cin,const ModInt <mod> &x)
+{
+	cin>>x.x;
+	x.x%=mod;
+	if(x.x<0) x.x+=mod;
+	return cin;
+}
+
+template <int mod>
+ostream & operator << (ostream &cout,const ModInt <mod> x)
+{
+	cout<<x.x;
+	return cout;
+}
+#endif

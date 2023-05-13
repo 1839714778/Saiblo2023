@@ -1,0 +1,30 @@
+#include <self/rand>
+#include <self/dsu>
+
+void GenTree(int n)
+{
+	DSUAE d;
+	d.init(n);
+	int m=0;
+	while(m!=n-1)
+	{
+		int x=rand(0,n-1),y=rand(0,n-1);
+		int f=d.merge(x,y);
+		m+=f;
+		if(f) cout<<x+1<<' '<<y+1<<endl;
+	}
+}
+
+void GenTreeWeighted(int n,int l,int r)
+{
+	DSUAE d;
+	d.init(n);
+	int m=0;
+	while(m!=n-1)
+	{
+		int x=rand(0,n-1),y=rand(0,n-1);
+		int f=d.merge(x,y);
+		m+=f;
+		if(f) cout<<x+1<<' '<<y+1<<' '<<rand(l,r)<<endl;
+	}
+}

@@ -1,0 +1,112 @@
+#ifndef _SELF_OPERATOR
+#define _SELF_OPERATOR 1
+#include <self/utility>
+using namespace std;
+template <typename T>
+ostream & operator<<(ostream &cout, const vector<T> &vec)
+{
+	cout << "{";
+	for (int i = 0; i < (int)vec.size(); i++)
+	{
+		cout << vec[i];
+		if (i != (int)vec.size() - 1)
+			cout << ',';
+	}
+	cout << "}";
+	return cout;
+}
+
+template <typename T1, typename T2>
+ostream &operator<<(ostream &cout, pair<T1, T2> p)
+{
+	cout << "(" << p.first << ',' << p.second << ")";
+	return cout;
+}
+
+template <typename T, typename T2>
+ostream &operator<<(ostream &cout, set<T, T2> s)
+{
+	vector<T> t;
+	for (auto x : s)
+		t.push_back(x);
+	cout << t;
+	return cout;
+}
+
+template <typename T, typename T2>
+ostream &operator<<(ostream &cout, multiset<T, T2> s)
+{
+	vector<T> t;
+	for (auto x : s)
+		t.push_back(x);
+	cout << t;
+	return cout;
+}
+
+template <typename T>
+ostream &operator<<(ostream &cout, queue<T> q)
+{
+	vector<T> t;
+	while (q.size())
+	{
+		t.push_back(q.front());
+		q.pop();
+	}
+	cout << t;
+	return cout;
+}
+
+template <typename T1, typename T2, typename T3>
+ostream &operator<<(ostream &cout, map<T1, T2, T3> m)
+{
+	for (auto &x : m)
+	{
+		cout << "Key: " << x.first << ' ' << "Value: " << x.second << endl;
+	}
+	return cout;
+}
+
+template <typename T1, typename T2>
+void operator+=(pair<T1, T2> &x,const pair<T1, T2> y)
+{
+	x.first += y.first;
+	x.second += y.second;
+}
+template <typename T1,typename T2>
+pair<T1,T2> operator + (const pair<T1,T2> &x,const pair<T1,T2> &y)
+{
+	return make_pair(x.first+y.first,x.second+y.second);
+}
+
+template <typename T1,typename T2>
+pair<T1,T2> operator - (const pair<T1,T2> &x,const pair<T1,T2> &y)
+{
+	return mp(x.first-y.first,x.second-y.second);
+}
+
+template <typename T1, typename T2>
+pair<T1, T2> operator-(pair<T1, T2> x)
+{
+	return make_pair(-x.first, -x.second);
+}
+
+template <typename T>
+vector<vector<T>> operator~(vector<vector<T>> vec)
+{
+	vector<vector<T>> v;
+	int n = vec.size(), m = vec[0].size();
+	v.resize(m);
+	for (int i = 0; i < m; i++)
+	{
+		v[i].resize(n);
+	}
+	for (int i = 0; i < m; i++)
+	{
+		for (int j = 0; j < n; j++)
+		{
+			v[i][j] = vec[j][i];
+		}
+	}
+	return v;
+}
+#endif

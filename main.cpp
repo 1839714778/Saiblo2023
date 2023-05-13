@@ -3,8 +3,9 @@
 #include "include/common.hpp"
 #include <Python.h>
 #include <bits/stdc++.h>
-#define mp make_pair
-#define pii pair<int,int>
+// #define mp make_pair
+// #define pii pair<int,int>
+#include <self/debug>
 using namespace std;
 const int N=MAP_SIZE;
 
@@ -251,7 +252,7 @@ namespace MyAI
 	}
 	Board m_board[M+5];
 	ftype Ns[M+5],Psa[M+5][ActionSize+5],s_val[M+5];
-	int go[M+5][ActionSize+5],valid[M+5][ActionSize+5];
+	int go[M+5][ActionSize+5],valid[M+5][ActionSize+5],Es[M+5];
 
 	void initNode(int x,const Board &board)
 	{
@@ -259,6 +260,21 @@ namespace MyAI
 		Ns[x]=0;
 		memset(Psa[x],0,sizeof(Psa[x]));
 		memset(go[x],-1,sizeof(go[x]));
+		Es[x]=0;
+		if(board.gameState!=GameState::Running)
+		{
+			Es[x]=1;
+			if(board.gameState==GameState::Undecided) s_val[x]=0;
+			else 
+			{
+				int win_id=-1;
+				if(board.gameState==GameState::Player0Win) win_id=0;
+				else win_id=1;
+				if(win_id==board.player_id) s_val[x]=1;
+				else s_val[x]=-1;
+			}
+			return;
+		}
 		for(int i=0;i<ActionSize;i++) valid[x][i]=board.isValid(i);
 		vector<ftype> vec=predictPY(board,valid[x],x==0);
 		s_val[x]=vec[0];
@@ -273,6 +289,14 @@ namespace MyAI
 			initNode(x,board);
 			Ns[x]++;
 			return -s_val[x];
+		}
+
+		if(Es[x])
+		{
+			ftype t=s_val[x]/Ns[x];
+			Ns[x]++;
+			s_val[x]+=t;
+			return -t;
 		}
 
 		pair<ftype,int> ch=mp(-100,-1);
@@ -295,7 +319,7 @@ namespace MyAI
 		return -t;
 	}
 
-	vector<Operation> solve(int player_id,const GameInfo &info)
+	vector<Operation> solve(int player_id,const GameInfo &info,vector<ftype>* actionP=0)
 	{
 		Board board;
 		board.player_id=player_id;
@@ -330,6 +354,8 @@ namespace MyAI
 			assert(mx.second!=-1);
 			p[mx.second]=1;
 		}
+
+		if(actionP) actionP=new vector<ftype>(p);
 
 		int ch=randomChoose(p);
 		Operation op;
@@ -412,22 +438,38 @@ void init()
 	cerr<<towerPos[0].size()<<' '<<towerPos[1].size()<<endl;
 }
 
+void play()
+{
+	Simulator s(GameInfo(1ull));
+	int cur=0;
+	int winner=-1;
+	for(int i=0;i<512;i++)
+	{
+		vector<Operation> vec;
+		vec=MyAI::solve(0,s.get_info());
+		for(auto &op:vec) assert(s.add_operation_of_player(0,op));
+		s.apply_operations_of_player(0);
+		
+		vec=MyAI::solve(1,s.get_info());
+		for(auto &op:vec) assert(s.add_operation_of_player(1,op));
+		s.apply_operations_of_player(1);
+
+		GameState state=s.next_round();
+		if(state!=Running)
+		{
+			if(state==Player0Win) winner=0;
+			else if(state==Player1Win) winner=1;
+			else assert(0);
+			break;
+		}
+	}
+	cout<<"winner is "<<winner<<endl;
+}
+
 int main()
 {
 	init();
-	// int res=0;
-	// for(int i=0;i<10001;i++)
-	// {
-	// 	auto x=Py_BuildValue("f",(float)i);
-	// 	res^=(int)(PyFloat_AsDouble(x));
-	// 	Py_DecRef(x);
-	// }
-	// cout<<res<<endl;
-	// return 0;
-	GameInfo info(2343ull);
-	vector<Operation> vec=MyAI::solve(0,info);
-	// cout<<vec[0].type<<endl;
-	// cout<<vec.size()<<endl;
+	play();
 	Py_Finalize();
 	return 0;
 }

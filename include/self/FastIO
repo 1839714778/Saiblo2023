@@ -1,0 +1,38 @@
+#include <self/utility>
+namespace FastIO
+{
+    const int MaxBufSize=1024*1024;
+    char buf[MaxBufSize+5];
+    int cursor=MaxBufSize;
+    inline char getchar()
+    {
+        if(cursor==MaxBufSize)
+        {
+            fread(buf,1,MaxBufSize,stdin);
+            cursor=0;
+        }
+        return buf[cursor++];
+    }
+    inline ll getnum()
+    {
+        static ll res;
+        static char c;
+        static int mut;
+        res=0;
+        c=0;
+        mut=1;
+        while(!isdigit(c) && c!='-') c=getchar();
+        if(c=='-')
+        {
+            mut=-1;
+            c=getchar();
+        }
+        while(isdigit(c))
+        {
+            res=(res<<3)+(res<<1)+c-'0';
+            c=getchar();
+        }
+        return res*mut;
+    }
+} // namespace FastIO
+using FastIO::getnum;

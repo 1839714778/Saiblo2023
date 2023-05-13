@@ -1,0 +1,195 @@
+struct ShengyuDingli
+{
+	ll UltimateMultiply(ll a,ll b,ll mod)
+	{
+		ll res=0;
+		while(b)
+		{
+			if(b&1)
+			{
+				res+=a;
+				if(res>=mod) res-=mod;
+			}
+			b>>=1;
+			a+=a;
+			if(a>=mod) a-=mod;;
+		}
+		return res;
+	}
+	inline ll exgcd(ll a,ll b,ll &x,ll &y)
+	{
+		if(a==0)
+		{
+			x=0;
+			y=1;
+			return b;
+		}
+		ll gcd=exgcd(b%a,a,x,y);
+		swap(x,y);
+		x-=(b/a)*y;
+		return gcd;
+	}
+	inline bool exgcd(ll a,ll b,ll c,ll &x,ll &y)
+	{
+//		cout<<a<<' '<<b<<' '<<c<<' ';
+		ll mx(1),my(1);
+		if(a<0) a=-a,mx=-mx;
+		if(b<0) b=-b,my=-my;
+		ll gcd=exgcd(a,b,x,y);
+		if(c%gcd!=0) return false;
+		if(gcd<0) gcd=-gcd;
+		c/=gcd;
+		x*=c*mx;
+		y*=c*my;
+//		cout<<x<<' '<<y<<endl;
+		return true;
+	}
+	void test()
+	{
+		ll x0,y0;
+		ll a,b,c;
+		cin>>a>>b>>c;
+		ll gcd=exgcd(a,b,x0,y0);
+		cout<<x0<<' '<<y0<<' '<<gcd<<endl;
+	}
+	bool solve2eq(ll a1,ll m1,ll a2,ll m2,ll &a0,ll &m0)
+	{
+		if(a1>a2)
+		{
+			swap(a1,a2);
+			swap(m1,m2);
+		}
+		ll x,y;
+		ll gcd=exgcd(m1,-m2,x,y);//a2-a1,
+//		cout<<a1<<' '<<m1<<' '<<a2<<' '<<m2<<' '<<gcd<<endl;
+		if((a2-a1)%gcd) return false;
+		ll multiplier=(a2-a1)/gcd;
+		ll nm=m1/abs(gcd)*m2;
+		chmod(multiplier,nm);
+		if(m1<0) return false;
+		x=UltimateMultiply(multiplier,x,nm);
+		ll x0=UltimateMultiply(x,m1,nm)+a1;
+		chmod(x0,nm);
+		a0=x0;
+		m0=nm;
+		return true;
+	}
+	bool solve(ll a[],ll m[],int len,ll &a0,ll &m0)
+	{
+		a0=a[0];
+		m0=m[0];
+		for(int i=1;i<len;i++)
+		{
+			if(!solve2eq(a0,m0,a[i],m[i],a0,m0)) return false;
+		}
+		return true;
+	}
+};
+
+#include <self/utility>
+#include <self/factorization>
+struct GetPrimitiveRoot
+{
+	static Factorization d;
+	int p;
+	vector<int> td;
+	inline int fastpow(int basic,int x)
+	{
+		int res=1;
+		while(x)
+		{
+			if(x&1) res*=basic;
+			basic*=basic;
+			x>>=1;
+		}
+		return res;
+	}
+	inline int fastpow(ll basic,int x,int mod)
+	{
+		ll res=1;
+		while(x)
+		{
+			if(x&1) (res*=basic)%=mod;
+			(basic*=basic)%=mod;
+			x>>=1;
+		}
+		return res;
+	}
+	int phi;
+	inline bool testG(int x)
+	{
+		for(auto d:td)
+		{
+			if(fastpow(x,d,p)==1) return false;
+		}
+		return true;
+	}
+	int getG(int _p)
+	{
+		p=_p;
+		vector<pii> v=d.factorize(p);
+		phi=1;
+		for(auto &o:v)
+		{
+			int x=o.first;
+			int e=o.second;
+			phi*=(x-1)*fastpow(x,e-1);
+		}
+		v=d.factorize(phi);
+		for(auto &o:v)
+		{
+			int x=o.first;
+			td.push_back(phi/x);
+		}
+		for(int i=1;;i++)
+		{
+			if(__gcd(i,p)!=1) continue;
+			if(testG(i)) return i;
+		}
+	}
+};
+
+#include <unordered_map>
+struct DiscreteLogarithm
+{
+	GetPrimitiveRoot gpr;
+	static const int B1=100000;
+	static const int B2=1000;
+	int g;
+	int p;
+	unordered_map<int,int> m;
+	inline int fastpow(ll basic,int x,int mod)
+	{
+		ll res=1;
+		while(x)
+		{
+			if(x&1) (res*=basic)%=mod;
+			(basic*=basic)%=mod;
+			x>>=1;
+		}
+		return res;
+	}
+	inline void init(int _p)
+	{
+		p=_p;
+		g=gpr.getG(p);
+		int now=1;
+		int gg=fastpow(g,B2,p);
+		for(int i=0;i<=B1;i++)
+		{
+			if(m.find(now)==m.end()) m[now]=i;
+			now=1LL*now*gg%p;
+		}
+	}
+	inline int search(int b)
+	{
+		int ig=fastpow(g,gpr.phi-1,p);
+		int now=b;
+		for(int i=0;i<B1;i++)
+		{
+			if(m.find(now)!=m.end()) return m[now]*B2+i;
+			now=1LL*now*ig%p;
+		}
+		return -1;
+	}
+};

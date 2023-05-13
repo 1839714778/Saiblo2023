@@ -1,0 +1,129 @@
+#ifndef _SELF_IMPLICITTREAP
+#define _SELF_IMPLICITTREAP 1
+namespace Treap
+{
+	struct Node
+	{
+		int sz;
+		int rd;
+		int l;
+		int r;
+		ll sum;
+		int key;
+		inline void pushup();
+	};
+	Node nodes[200005];
+	int rt;
+	int nodesCount=1;
+	inline void Node::pushup()
+	{
+		sum=nodes[l].sum+nodes[r].sum+key;
+		sz=nodes[l].sz+nodes[r].sz+1;
+	}
+	int newNode(int key)
+	{
+		Node &x=nodes[nodesCount];
+		x.sum=x.key=key;
+		x.rd=rand();
+		x.sz=1;
+		return nodesCount++;
+	}
+	inline int merge(int x,int y)
+	{
+		if(x==0) return y;
+		if(y==0) return x;
+		if(nodes[x].rd<nodes[y].rd)
+		{
+			nodes[y].l=merge(x,nodes[y].l);
+			nodes[y].pushup();
+			return y;
+		}
+		else
+		{
+			nodes[x].r=merge(nodes[x].r,y);
+			nodes[x].pushup();
+			return x;
+		}
+	}
+	inline pii splitByRank(int rt,int k,int pSum=0)
+	{
+		if(rt==0) return mp(0,0);
+		int curID=pSum+nodes[nodes[rt].l].sz;
+		if(curID<=k)
+		{
+			pii r=splitByRank(nodes[rt].r,k,curID+1);
+			nodes[rt].r=r.first;
+			nodes[rt].pushup();
+			return mp(rt,r.second);
+		}
+		else
+		{
+			pii l=splitByRank(nodes[rt].l,k,pSum);
+			nodes[rt].l=l.second;
+			nodes[rt].pushup();
+			return mp(l.first,rt);
+		}
+	}
+	inline pii splitByKey(int rt,int k)
+	{
+		if(rt==0) return mp(0,0);
+		if(nodes[rt].key<=k)
+		{
+			pii r=splitByKey(nodes[rt].r,k);
+			nodes[rt].r=r.first;
+			nodes[rt].pushup();
+			return mp(rt,r.second);
+		}
+		else
+		{
+			pii l=splitByKey(nodes[rt].l,k);
+			nodes[rt].l=l.second;
+			nodes[rt].pushup();
+			return mp(l.first,rt);
+		}
+	}
+
+	inline void insert(int key)
+	{
+		pii o=splitByKey(rt,key);
+		rt=merge(merge(o.first,newNode(key)),o.second);
+	}
+	inline int rrrr(int rt)
+	{
+		int res=0;
+		while(rt!=0)
+		{
+			res=nodes[rt].key;
+			rt=nodes[rt].r;
+		}
+		return res;
+	}
+	inline int llll(int rt)
+	{
+		int res=0;
+		while(rt!=0)
+		{
+			res=nodes[rt].key;
+			rt=nodes[rt].l;
+		}
+		return res;
+	}
+	inline void query(ll s)
+	{
+		int sz=nodes[rt].sz;
+		pii o=splitByRank(rt,(sz-1)/2);
+		int x=rrrr(o.first);
+		printf("%d %lld\n",x,s+1LL*x*nodes[o.first].sz-nodes[o.first].sum+nodes[o.second].sum-1LL*x*nodes[o.second].sz);
+		rt=merge(o.first,o.second);
+	}
+	inline void test()
+	{
+		int a=newNode(1);
+		int b=newNode(2);
+		int c=merge(a,b);
+		cout<<nodes[c].sz<<endl;
+	}
+}
+using Treap::query;
+using Treap::insert;
+#endif

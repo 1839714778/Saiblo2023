@@ -1,0 +1,31 @@
+struct LagrangeInterpolation
+{
+	inline int fastpow(ll basic,int x,int mod)
+	{
+		ll res=1;
+		while(x)
+		{
+			if(x&1) (res*=basic)%=mod;
+			(basic*=basic)%=mod;
+			x>>=1;
+		}
+		return res;
+	}
+	int solve(vector<pii> d,int k,int mod)
+	{
+		int n=d.size();
+		int ans=0;
+		for(int i=0;i<n;i++)
+		{
+			int res=1;
+			int dom=1;
+			for(int j=0;j<n;j++)
+			{
+				if(i!=j) res=1LL*res*(k-d[j].first+mod)%mod;
+				if(i!=j) dom=1LL*dom*(d[i].first-d[j].first+mod)%mod;
+			}
+			chadd(ans,1LL*res*fastpow(dom,mod-2,mod)%mod*d[i].second%mod);
+		}
+		return ans;
+	}
+};

@@ -1,0 +1,166 @@
+#ifndef _SELF_GRAPH
+#define _SELF_GRAPH 1
+#include <vector>
+#include <self/operator>
+using namespace std;
+struct Graph
+{
+	public:
+	bool unDirected;
+	vector <vector <int> > edges;
+	int n;
+	int m;
+	int isTree;
+	template <typename Iterator>
+	void init(Iterator begin,Iterator end,bool _unDirected=true)
+	{
+		unDirected=_unDirected;
+		n=end-begin;
+		edges.resize(n);
+		for(Iterator it=begin;it!=end;it++)
+		{
+			edges[it-begin]=(*it);
+			m+=it->size();
+		}
+		// assert(m%2==0);
+		m/=2;
+		isTree=-1;
+	}
+	void init(int _n,bool _unDirected=true)
+	{
+		n=_n;
+		m=0;
+		edges.resize(n+5);
+		unDirected=_unDirected;
+		isTree=-1;
+	}
+	bool testTree()
+	{
+		if(isTree!=-1) return isTree;
+		assert(unDirected==true);
+		if(n!=m+1)
+		{
+			isTree=false;
+			return isTree;
+		}
+		queue <int> que;
+		vector <int> visit(n,0);
+		que.push(0);
+		while(que.size())
+		{
+			int x=que.front();
+			visit[x]=true;
+			que.pop();
+			for(auto u:edges[x])
+			{
+				if(visit[u]) continue;
+				que.push(u);
+			}
+		}
+		for(int i=0;i<n;i++)
+		{
+			if(!visit[i])
+			{
+				isTree=false;
+				return isTree;
+			}
+		}
+		isTree=true;
+		return isTree;
+	}
+	void feedEdges(vector <int> _edges[])
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i]=_edges[i];
+		}
+	}
+	void addEdges(int x,int y)
+	{
+		edges[x].push_back(y);
+		if(unDirected) edges[y].push_back(x);
+		m++;
+	}
+	void clear(int n)
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i].clear();
+		}
+		m=0;
+	}
+	inline void reset(int _n)
+	{
+		int n=_n;
+		clear(n);
+	}
+	inline void clear()
+	{
+		clear(n);
+	}
+	inline void print()
+	{
+		cout<<"A total of "<<m<<" edges"<<endl;
+		for(int i=0;i<n;i++)
+		{
+			for(auto &j:edges[i])
+			{
+				if(!unDirected || (i<j)) cout<<"("<<i<<'-'<<j<<")"<<endl;
+			}
+		}
+	}
+};
+
+template <typename T>
+struct GraphWithCost
+{
+	public:
+	bool unDirected;
+	vector <vector <pair<int,T> > > edges;
+	int n;
+	int m;
+	int isTree;
+	void init(int _n,bool _unDirected)
+	{
+		n=_n;
+		m=0;
+		edges.resize(n+5);
+//		dfn.resize(n+5);
+//		low.resize(n+5);
+		unDirected=_unDirected;
+		isTree=-1;
+	}
+	void feedEdges(vector <pair<int,T> > _edges[])
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i]=_edges[i];
+		}
+	}
+	void addEdges(int x,int y,int cost)
+	{
+		edges[x].push_back(mp(y,cost));
+		if(unDirected) edges[y].push_back(mp(x,cost));
+		m++;
+	}
+	void clear()
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i].clear();
+		}
+		m=0;
+	}
+	void print()
+	{
+		cout<<"A total of "<<m<<" edges"<<endl;
+		for(int i=0;i<n;i++)
+		{
+			for(auto &j:edges[i])
+			{
+				if(!unDirected || (i<j.first)) cout<<"("<<i<<'-'<<j.first<<")"<<endl;
+			}
+		}
+	}
+};
+#endif

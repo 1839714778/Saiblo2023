@@ -65,6 +65,7 @@ private:
                     ant.hp = 0;
                     ant.state = AntState::Fail;
                     info.update_coin(sw.player, ant.reward());
+                    info.antKills[sw.player]++;
                 }
             }
         }
@@ -87,6 +88,7 @@ private:
             {
                 if (info.ants[idx].state == AntState::Fail)
                     info.update_coin(tower.player, info.ants[idx].reward());
+                    info.antKills[tower.player^1]++;
             }
             // Reset tower's damage (clear buff effect)
             tower.damage = TOWER_INFO[tower.type].attack;
@@ -177,6 +179,10 @@ private:
             return GameState::Player1Win;
         else if (info.bases[0].hp > info.bases[1].hp)
             return GameState::Player0Win;
+        else if (info.antKills[0]>info.antKills[1])
+            return GameState::Player0Win;
+        else if (info.antKills[0]<info.antKills[1])
+            return GameState::Player1Win;
         else
             return GameState::Undecided;
     }

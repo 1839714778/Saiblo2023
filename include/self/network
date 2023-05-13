@@ -1,0 +1,195 @@
+#include <self/utility>
+using namespace std;
+struct Network
+{
+	void inline addEdge(int x,int y,int flow)
+	{
+		assert(x>=0 && y>=0 && x<n && y<n);
+		assert(flow>=0);
+		rev[x].push_back(edges[y].size());
+		rev[y].push_back(edges[x].size());
+		edges[x].push_back(make_pair(y,flow));
+		edges[y].push_back(make_pair(x,0));
+		dir[x].push_back(true);
+		dir[y].push_back(false);
+	}
+	void inline addEdge(int x,int y,int flow,int id)
+	{
+		edgeID[x].push_back(id);
+		edgeID[y].push_back(id);
+		addEdge(x,y,flow);
+	}
+	vector <int> *edgeID=nullptr;
+	vector <pair<int,int> > *edges=nullptr;
+	vector <int> *rev=nullptr;
+	vector <int> *dir=nullptr;
+	int src,dst;
+	int n;
+	void init(int _n)
+	{
+		n=_n;
+		edges=new vector <pair<int,int> > [n];
+		rev=new vector <int> [n];
+		edgeID=new vector <int> [n];
+		dir=new vector <int> [n];
+		src=dst=-1;
+	}
+	void operator = (const Network &g)
+	{
+		if(edges) delete [] edges;
+		if(rev) delete [] rev;
+		if(edgeID) delete [] edgeID;
+		if(dir) delete [] dir;
+		n=g.n;
+		src=g.src;
+		dst=g.dst;
+		edges=new vector <pair<int,int> > [n];
+		rev=new vector <int> [n];
+		edgeID=new vector <int> [n];
+		dir=new vector <int> [n];
+		for(int i=0;i<n;i++)
+		{
+			edgeID[i]=g.edgeID[i];
+			rev[i]=g.rev[i];
+			edges[i]=g.edges[i];
+			dir[i]=g.dir[i];
+		}
+	}
+	void feedEdges(vector <pair<int,int> > _edges[],vector <int> _rev[])
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i]=_edges[i];
+			rev[i]=_rev[i];
+		}
+	}
+	void feedsd(int _src,int _dst)
+	{
+		src=_src;
+		dst=_dst;
+	}
+	void clear()
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i].clear();
+			rev[i].clear();
+			dir[i].clear();
+			edgeID[i].clear();
+		}
+		src=dst=-1;
+	}
+	~Network()
+	{
+		if(edges) delete [] edges;
+		if(rev) delete [] rev;
+		if(dir) delete [] dir;
+		if(edgeID) delete [] edgeID;
+	}
+};
+
+struct Dinic
+{
+	const int DistInf=1039074182;
+	Network g;
+	int *dist;
+	bool *visit;
+	int *cur;
+	queue <int> que;
+	inline void init(Network &_g)
+	{
+		g=_g;
+		dist=new int[g.n+5];
+		visit=new bool[g.n+5];
+		cur=new int[g.n+5];
+	}
+	~Dinic()
+	{
+		delete [] dist;
+		delete [] visit;
+		delete [] cur;
+	}
+	inline bool bfs()
+	{
+		for(int i=0;i<g.n;i++)
+		{
+			dist[i]=DistInf;
+		}
+		dist[g.src]=0;
+		que.push(g.src);
+		while(que.size())
+		{
+			int x=que.front();
+			que.pop();
+			for(int i=0;i<(int)g.edges[x].size();i++)
+			{
+				if(g.edges[x][i].second==0) continue;
+				int u=g.edges[x][i].first;
+				if(dist[u]>dist[x]+1)
+				{
+					dist[u]=dist[x]+1;
+					que.push(u);
+				}
+			}
+		}
+		return (dist[g.dst]<DistInf);
+	}
+	int dfs(int x,int flow)
+	{
+		if(x==g.dst) return flow;
+		int gain=0;
+		for(int &i=cur[x];i<(int)g.edges[x].size();i++)
+		{
+			int u=g.edges[x][i].first;
+			if(dist[u]!=dist[x]+1) continue;
+			if(g.edges[x][i].second==0) continue;
+			int &rm=g.edges[x][i].second;
+			int tf=dfs(u,min(rm,flow));
+			rm-=tf;
+			g.edges[u][g.rev[x][i]].second+=tf;
+			flow-=tf;
+			gain+=tf;
+			if(flow==0) break;
+		}
+		return gain;
+	}
+	inline int dinic()
+	{
+		int flow=0;
+		while(bfs())
+		{
+			memset(cur,0,sizeof(int)*g.n);
+			int tf=dfs(g.src,DistInf);
+			flow+=tf;
+		}
+		return flow;
+	}
+	inline int countflow()
+	{
+		int flow=0;
+		for(auto x:g.edges[g.dst])
+		{
+			flow+=x.second;
+		}
+		return flow;
+	}
+	int delflow(int x,int y,int flow)
+	{
+		int _src=g.src;
+		int _dst=g.dst;
+		g.feedsd(y,x);
+		bfs();
+		memset(cur,0,sizeof(int)*g.n);
+		int f=dfs(y,flow);
+		g.feedsd(_src,_dst);
+		return f;
+	}
+	int* getrmflow(int x,int y)
+	{
+		for(auto &e:g.edges[x])
+		{
+			if(e.first==y) return &e.second;
+		}
+	}
+};
+

@@ -1,0 +1,60 @@
+#ifndef __SELF_ST_TABLE
+#define __SELF_ST_TABLE 1
+
+#include <self/utility>
+template <typename T,typename _Compare=std::less<T> >
+struct StTableFast //
+{
+    std::vector <std::vector<T> > table;
+    std::vector <int> logTable;
+    _Compare comp;
+    template <typename Iterator>
+    void init(Iterator begin,Iterator end)
+    {
+        int n=end-begin;
+        int lg=0;
+        int nn=1;
+        while(nn<=n)
+        {
+            nn<<=1;
+            lg++;
+        }
+        lg--;
+        table.resize(lg+1);
+        for(int i=0;i<=lg;i++)
+        {
+            table[i].resize(n-(1<<i)+1);
+        }
+        logTable.resize(n+1);
+        for(Iterator it=begin;it!=end;it++)
+        {
+            table[0][it-begin]=*it;
+        }
+        T ta,tb;
+        for(int i=1;i<=lg;i++)
+        {
+            for(int j=0;j<n-(1<<i)+1;j++)
+            {
+                ta=table[i-1][j];
+                tb=table[i-1][j+(1<<(i-1))];
+                if(comp(ta,tb)) table[i][j]=ta;else table[i][j]=tb;
+            }
+        }
+        logTable[1]=0;
+        for(int i=2;i<=n;i++)
+        {
+            logTable[i]=logTable[i/2]+1;
+        }
+    }
+    T query(int l,int r) //[)
+    {
+        assert(l<r);
+        int n=r-l;
+        int lg=logTable[n];
+        T a=table[lg][l];
+        T b=table[lg][r-(1<<lg)];
+        if(comp(a,b)) return a;else return b;
+    }
+};
+
+#endif

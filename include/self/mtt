@@ -1,0 +1,95 @@
+#include <self/complex>
+template <int mod,int logn>
+struct MTT
+{
+	static const int N=(1<<logn);
+	static constexpr double pi=asin(1)*2;
+	Complex w[N+5];
+	Complex buf[N+5];
+	Complex r[N+5];
+	int inv[N+5];
+	void dft(Complex c[],int nn,int lg,int rev)
+	{
+		for(int i=1;i<nn;i++)
+		{
+			inv[i]=(inv[i>>1]>>1) | ((i&1)<<(lg-1));
+		}
+		for(int i=0;i<nn;i++)
+		{
+			buf[i]=c[inv[i]];
+		}
+		int lvl=logn;
+		for(int b=1;b<nn;b<<=1)
+		{
+			lvl--;
+			for(int i=0;i<b;i++) r[i]=(rev?w[N-(i<<lvl)]:w[i<<lvl]);
+			for(int i=0;i<nn;i+=b*2)
+			{
+				for(int j=0;j<b;j++)
+				{
+					Complex tmp=r[j]*buf[i+j+b];
+					buf[i+j+b]=buf[i+j]-tmp;
+					buf[i+j]=buf[i+j]+tmp;
+				}
+			}
+		}
+		// exit(0);
+		if(rev)
+		{
+			for(int i=0;i<nn;i++) buf[i].x/=nn,buf[i].y/=nn;
+		}
+		for(int i=0;i<nn;i++) c[i]=buf[i];
+	}
+
+	Complex ca[N+5],cb[N+5],cc[N+5];
+	Complex da[N+5],db[N+5],dc[N+5],dd[N+5];
+	inline void multiply(const vector<int> &a,const vector<int> &b,vector<int> &c)
+	{
+		int nn=1,lg=0;
+		while(nn<(int)a.size()+(int)b.size()-1)
+		{
+			nn<<=1;
+			lg++;
+		}
+		for(int i=0;i<nn;i++) ca[i]=Complex(0,0),cb[i]=Complex(0,0);
+		for(int i=0;i<(int)a.size();i++) ca[i]=Complex(a[i]>>15,(a[i]&32767));
+		for(int i=0;i<(int)b.size();i++) cb[i]=Complex(b[i]>>15,(b[i]&32767));
+		c.clear();
+		c.resize(nn);
+		dft(ca,nn,lg,0);
+		dft(cb,nn,lg,0);
+		for(int i=0;i<nn;i++)
+		{
+			int j=(nn-i)%nn;
+			Complex p,q;
+			p=ca[i],q=conjunc(ca[j]);
+			da[i]=(p+q)*Complex(0.5,0);
+			db[i]=(p-q)*Complex(0,-0.5);
+			p=cb[i],q=conjunc(cb[j]);
+			dc[i]=(p+q)*Complex(0.5,0);
+			dd[i]=(p-q)*Complex(0,-0.5);
+		}
+		for(int i=0;i<nn;i++)
+		{
+			ca[i]=da[i]*dc[i];
+			cb[i]=da[i]*dd[i]+db[i]*dc[i];
+			cc[i]=db[i]*dd[i];
+		}
+		dft(ca,nn,lg,1);
+		dft(cb,nn,lg,1);
+		dft(cc,nn,lg,1);
+		for(int i=0;i<nn;i++)
+		{
+			c[i]=((((ll)round(ca[i].x)%mod)<<30)+(((ll)(round(cb[i].x))%mod)<<15)+(((ll)(round(cc[i].x))%mod)))%mod;
+		}
+		while(c.size() && c.back()==0) c.pop_back();
+	}
+	MTT()
+	{
+		for(int i=0;i<=N;i++)
+		{
+			w[i].x=cos(pi*2*(double)i/N);
+			w[i].y=sin(pi*2*(double)i/N);
+		}
+	}
+};

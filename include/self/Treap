@@ -1,0 +1,202 @@
+ll genrand()
+{
+	return 1LL*rand()*RAND_MAX+1LL*rand();
+}
+
+int rand(int l,int r)
+{
+	return genrand()%(r-l)+l;
+}
+
+struct NodeData
+{
+	int data;
+	NodeData(){}
+	NodeData(int _data){data=_data;}
+	bool operator < (int key)
+	{
+		return data<key;
+	}
+	bool operator == (int key)
+	{
+		return data==key;
+	}
+	bool operator <= (int key)
+	{
+		return data<key || data==key;
+	}
+};
+
+struct node
+{
+	node *l=nullptr,*r=nullptr;
+	NodeData data;
+	int count=1;
+	int rd=rand(1,1e9);
+	int size=1;
+	node(){}
+	node(NodeData _data){data=_data;}
+};
+
+void pushdown(node *rt)
+{
+	
+}
+
+void pushup(node *rt)
+{
+	rt->size=(rt->l==nullptr?0:rt->l->size)+(rt->r==nullptr?0:rt->r->size)+rt->count;
+}
+
+pair<node*,node*> split(node *rt,int key)
+{
+	if(rt==nullptr) return mp(nullptr,nullptr);
+	pushdown(rt);
+	if(rt->data<=key)
+	{
+		pair<node*,node*> p=split(rt->r,key);
+		rt->r=p.first;
+		pushup(rt);
+		return mp(rt,p.second);
+	}
+	else
+	{
+		pair<node*,node*> p=split(rt->l,key);
+		rt->l=p.second;
+		pushup(rt);
+		return mp(p.first,rt);
+	}
+}
+
+int sz(node *rt)
+{
+	return (rt==nullptr?0:rt->size);
+}
+
+bool check(node *rt)
+{
+	if(rt==nullptr) return true;
+	if(!check(rt->l)) return false;
+	if(!check(rt->r)) return false;
+	return (rt->size==rt->count+sz(rt->l)+sz(rt->r));
+}
+
+node* rrrr(node *rt)
+{
+	node *now=rt;
+	while(now->r!=nullptr) now=now->r;
+	return now;
+}
+
+node* llll(node *rt)
+{
+	node *now=rt;
+	while(now->l!=nullptr) now=now->l;
+	return now;
+}
+
+node* merge(node *x,node *y)
+{
+	if(x==nullptr) return y;
+	if(y==nullptr) return x;
+	if(x->rd<y->rd)
+	{
+		pushdown(y->l);
+		y->l=merge(x,y->l);
+		pushup(y);
+		return y;
+	}
+	else
+	{
+		pushdown(x->r);
+		x->r=merge(x->r,y);
+		pushup(x);
+		return x;
+	}
+}
+
+int count(node *rt,int x)
+{
+	if(rt==nullptr) return 0;
+	if(rt->data==x) return rt->count;
+	if(rt->data<=x) return count(rt->r,x);else return count(rt->l,x);
+}
+
+void insert(node *&rt,int x)
+{
+	pair<node*,node*> p=split(rt,x);
+	if(count(p.first,x))
+	{
+		node *now=p.first;
+		while(now->r!=nullptr)
+		{
+			now->size++;
+			now=now->r;
+		}
+		now->size++;
+		now->count++;
+	}
+	else
+	{
+		p.first=merge(p.first,new node(x));
+	}
+	rt=merge(p.first,p.second);
+	pushup(rt);
+}
+
+void erase(node *&rt,int x)
+{
+	pair<node*,node*> p=split(rt,x);
+	if(count(p.first,x)>1)
+	{
+		node *now=p.first;
+		while(now->r!=nullptr)
+		{
+			now->size--;
+			now=now->r;
+		}
+		now->size--;
+		now->count--;
+	}
+	else
+	{
+		pair<node*,node*> t=split(p.first,x-1);
+		p.first=t.first;
+		delete t.second;
+	}
+	rt=merge(p.first,p.second);
+	pushup(rt);
+}
+
+int querypre(node *rt,int x)
+{
+	pair <node*,node*> p=split(rt,x-1);
+	int res=rrrr(p.first)->data.data;
+	merge(p.first,p.second);
+	return res;
+}
+
+int querysuc(node *&rt,int x)
+{
+	pair <node*,node*> p=split(rt,x);
+	int res=llll(p.second)->data.data;
+	rt=merge(p.first,p.second);
+	return res;
+}
+
+int querykth(node *rt,int x)
+{
+	if(x<sz(rt->l)) return querykth(rt->l,x);
+	x-=sz(rt->l);
+	if(x<rt->count) return rt->data.data;
+	x-=rt->count;
+	return querykth(rt->r,x);
+}
+
+int getrank(node *rt,int x)
+{
+	pair <node*,node*> p=split(rt,x-1);
+	int res=(p.first==nullptr?0:p.first->size);
+	merge(p.first,p.second);
+	return res;
+}

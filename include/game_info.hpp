@@ -35,6 +35,7 @@ struct GameInfo
     double pheromone[2][MAP_SIZE][MAP_SIZE];        ///< Pheromone of each point on the map: "pheromone[player_id][x][y]"
     std::vector<SuperWeapon> super_weapons;         ///< Super weapons being used
     int super_weapon_cd[2][SuperWeaponCount];       ///< Super weapon cooldown of both sides: "super_weapon_cd[player_id]"
+    int antKills[2]; //number of ant killed
     
     int next_ant_id;                                ///< ID of the next generated ant.
     int next_tower_id;                              ///< ID of the next built tower.
@@ -47,6 +48,7 @@ struct GameInfo
         coins[0]=info.coins[0];coins[1]=info.coins[1];
         memcpy(pheromone,info.pheromone,sizeof(info.pheromone));
         memcpy(super_weapon_cd,info.super_weapon_cd,sizeof(info.super_weapon_cd));
+        antKills[0]=info.antKills[0];antKills[1]=info.antKills[1];
         next_ant_id=info.next_ant_id;
         next_tower_id=info.next_tower_id;
         return (*this);
@@ -54,7 +56,7 @@ struct GameInfo
 
     GameInfo(unsigned long long seed)
         : round(0), bases{Base(0), Base(1)}, coins{COIN_INIT, COIN_INIT},
-          super_weapon_cd{}, next_ant_id(0), next_tower_id(0)
+          super_weapon_cd{}, antKills{}, next_ant_id(0), next_tower_id(0)
     {
         // Initialize pheromone
         Random random(seed);

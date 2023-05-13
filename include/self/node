@@ -1,0 +1,179 @@
+#include <self/utility>
+#include <self/debug>
+using namespace std;
+int n;
+int c[200005];
+int q[200005];
+
+#include <self/rand>
+namespace TreapSpace
+{
+	//支持区间加上某一个数，并对节点内的值进行查询 
+	template <typename T=int>
+	struct Data1
+	{
+		T x;
+		T tag=0;
+		Node1 (T _x){x=_x;};
+	};
+	template <typename T>
+	struct Pushdown
+	{
+		inline void operator ()(int *x,const int *l,const int *r);
+		inline void operator ()(Data1 <> *x,const Data1 <> *l,const Data1 <> *r)
+		{
+			if(l) l->tag+=x->tag,l->x+=x->tag;
+			if(r) r->tag+=x->tag,r->x+=x->tag;
+			x->tag=0;
+		}
+	};
+	
+	template <typename T>
+	struct Pushup
+	{
+		inline void operator ()(int *x,const int *l,const int *r);
+		inline void operator ()(Data1 <> *x,const Data1 <> *l,const Data1 <> *r);
+	};
+};
+
+template <typename Data=int,typename _Pushdown=TreapSpace::Pushdown <Data>,typename _Pushup=TreapSpace::Pushup <Data> >
+struct Treap
+{
+	struct Node
+	{
+		Data value;
+		Node *l=nullptr,*r=nullptr;
+		int sz=1;
+		int rd=rand(1,1e9);
+		node();
+		node(Data _value){value=_value;}
+		inline int size()
+		{
+			return (this==nullptr?0:sz);
+		}
+		inline void pushup()
+		{
+			_pushup(this,l?l->value:nullptr,r?r->value:nullptr);
+		}
+		inline void pushdown()
+		{
+			_pushdown(this,l?l->value:nullptr,r?r->value:nullptr);
+		}
+	};
+	_Pushdown _pushdown;
+	_Pushup _pushup;
+	inline pair<Node*,Node*> splitID(Node *rt,int key,int pSum=0)
+	{
+		if(rt==nullptr) return mp(nullptr,nullptr);
+		int curID=pSum+rt->l->size();
+		rt->pushdown();
+		if(curID<=key)
+		{
+			pair <Node*,Node*> o=splitID(rt->r,key,pSum+rt->l->size());
+			rt->r=o.first;
+			rt->pushup();
+			return mp(rt,o.second);
+		}
+		else
+		{
+			pair <Node*,Node*> o=splitID(rt->l,key,pSum);
+			rt->l=o.second;
+			rt->pushup();
+			return mp(o.first,rt);
+		}
+	}
+	inline pair<Node*,Node*> splitValue(Node *rt,Data key)
+	{
+		if(rt==nullptr) return mp(nullptr,nullptr);
+		rt->pushdown();
+		if(rt->key<=key)
+		{
+			pair <Node*,Node*> o=splitID(rt->r,key);
+			rt->r=o.first;
+			rt->pushup();
+			return mp(rt,o.second);
+		}
+		else
+		{
+			pair <Node*,Node*> o=splitID(rt->l,key);
+			rt->l=o.second;
+			rt->pushup();
+			return mp(o.first,rt);
+		}
+	}
+	inline Node* merge(Node *a,Node *b)
+	{
+		if(a->rd>b->rd)
+		{
+			a->pushdown();
+			Node *c=merge(a->r,b);
+			a->r=c;
+			a->pushup();
+			return a;
+		}
+		else
+		{
+			b->pushdown();
+			Node *c=merge(a,b->l);
+			b->l=c;
+			b->pushup();
+			return b;
+		}
+	}
+	Data querykth(Node *rt,int key,int pSum=0)
+	{
+		int curID=pSum+rt->l->size();
+		rt->pushdown();
+		if(curID==key) return rt->value;
+		if(curID<key) return querykth(rt->r,key,pSum+rt->l->size());
+		else return querykth(rt->l,key,pSum);
+	}
+	inline void insert(Node *&rt,Data key)
+	{
+		pair<Node*,Node*> o=split(rt,key);
+		rt=merge(merge(o.first,new Node(key)),o.second);
+	}
+	
+};
+vector <pii> vSort;
+int a[200005];
+int b[200005];
+
+struct Data
+{
+	TreapSpace::Data1 data;
+	int res=0;
+	Data(Data _data){data=_data;}
+}
+
+struct Pushdown
+{
+	void operator () (Data *x,Data *l,Data *r)
+	{
+		
+	}
+};
+
+int main()
+{
+//	freopen("input.txt","r",stdin);
+	cin>>n;
+	for(int i=0;i<n;i++)
+	{
+		static int x,y;
+		scanf("%d%d",&x,&y);
+		vSort.push_back(mp(-y,x));
+	}
+	sort(all(vSort));
+	for(int i=0;i<n;i++)
+	{
+		a[i]=vSort[i].second;
+	}
+	int q;
+	for(int i=0;i<q;i++)
+	{
+		scanf("%d",b+i);
+		
+	}
+	return 0;
+}

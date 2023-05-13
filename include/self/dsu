@@ -1,0 +1,139 @@
+#ifndef _SELF_DSU
+#define _SELF_DSU 1
+struct DSUAE
+{
+	int *f;
+	inline void clear(int n)
+	{
+		for(int i=0;i<n;i++)
+		{
+			f[i]=i;
+		}
+	}
+	inline void init(int n)
+	{
+		f=new int[n+5];
+		clear(n);
+	}
+	inline int find(int x)
+	{
+		return (f[x]==x?x:f[x]=find(f[x]));
+	}
+	inline bool merge(int x,int y)
+	{
+		x=find(x);
+		y=find(y);
+		if(x==y) return 0;
+		// if(x&1) f[x]=y;else f[y]=x;
+		f[y]=x;
+		return 1;
+	}
+	inline bool same(int x,int y)
+	{
+		return (find(x)==find(y));
+	}
+};
+
+struct DSU
+{
+	int *f;
+	int *depth;
+	int *sz;
+	int n;
+	inline void clear(int n)
+	{
+		for(int i=0;i<n;i++)
+		{
+			f[i]=i;
+			depth[i]=1;
+			sz[i]=1;
+		}
+	}
+	inline void init(int _n)
+	{
+		n=_n;
+		f=new int[n+5];
+		depth=new int [n+5];
+		sz=new int [n+5];
+		clear(n);
+	}
+	inline int find(int x)
+	{
+		assert(0<=x && x<n);
+		return (f[x]==x?x:f[x]=find(f[x]));
+	}
+	inline int getSize(int x)
+	{
+		assert(0<=x && x<n);
+		return sz[find(x)];
+	}
+	inline int merge(int x,int y)
+	{
+		assert(0<=x && x<n);
+		assert(0<=y && y<n);
+		x=find(x);
+		y=find(y);
+		if(x==y) return false;
+		if(depth[x]>depth[y])
+		{
+			f[y]=x;
+			sz[x]+=sz[y];
+		}
+		else if(depth[y]>depth[x])
+		{
+			f[x]=y;
+			sz[y]+=sz[x];
+		}
+		else
+		{
+			sz[y]+=sz[x];
+			f[x]=y;
+			depth[y]++;
+		}
+		return true;
+	}
+	inline int same(int x,int y)
+	{
+		assert(0<=x && x<n);
+		assert(0<=y && y<n);
+		return (find(x)==find(y));
+	}
+	~DSU()
+	{
+		delete[] f;
+		delete[] depth;
+		delete[] sz;
+	}
+};
+
+struct PersistentDSU:public DSU
+{
+	int find(int x)
+	{
+		return (x==f[x]?x:find(f[x]));
+	}
+	inline int merge(int x,int y)
+	{
+		x=find(x);
+		y=find(y);
+		if(x==y) return false;
+		if(depth[x]>depth[y])
+		{
+			f[y]=x;
+			sz[x]+=sz[y];
+		}
+		else if(depth[y]>depth[x])
+		{
+			f[x]=y;
+			sz[y]+=sz[x];
+		}
+		else
+		{
+			sz[y]+=sz[x];
+			f[x]=y;
+			depth[y]++;
+		}
+		return true;
+	}
+};
+#endif

@@ -1,0 +1,58 @@
+template <int c,int mod>
+struct F2 //a*(c^0.5)+b
+{
+	int a,b;
+	F2():a(0),b(0){}
+	F2(int _a):a(0),b(_a){}
+	F2(int _a,int _b):a(_a),b(_b){}
+	inline F2& operator += (const F2 &oth){
+		a+=oth.a-mod;
+		b+=oth.b-mod;
+		a+=(a>>31) & mod;
+		b+=(b>>31) & mod;
+		return (*this);
+	}
+	inline F2& operator -= (const F2 &oth){
+		a-=oth.a;
+		b-=oth.b;
+		a+=(a>>31) & mod;
+		b+=(b>>31) & mod;
+		return (*this);
+	}
+	inline F2& operator *= (const int &k){
+		a=1LL*a*k%mod;
+		b=1LL*b*k%mod;
+		return (*this);
+	}
+	inline F2& operator *= (const F2 &oth){
+		int t=(1LL*c*a*oth.a+1LL*b*oth.b)%mod;
+		a=(1LL*a*oth.b+1LL*b*oth.a)%mod;
+		b=t;
+		return (*this);
+	}
+	inline F2 operator + (const F2 &oth)const{
+		return F2(*this)+=oth;
+	}
+	inline F2 operator - (const F2 &oth)const{
+		return F2(*this)-=oth;
+	}
+	inline F2 operator * (const int &k)const{
+		return F2(*this)*=k;
+	}
+	inline F2 operator * (const F2 &oth)const{
+		return F2(*this)*=oth;
+	}
+	inline F2 E()const{
+		return F2(0,1);
+	}
+	inline F2 pow(ll n)const{
+		F2 bas=(*this);
+		F2 res=E();
+		while(n)
+		{
+			if(n&1) res*=bas;
+			n>>=1;bas*=bas;
+		}
+		return res;
+	}
+};

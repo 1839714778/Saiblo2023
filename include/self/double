@@ -1,0 +1,72 @@
+#ifndef _SELF_DOUBLE
+#define _SELF_DOUBLE
+struct Double
+{
+    double x;
+    Double():x(0){}
+    Double(const double _):x(_){}
+    Double length()const{
+        return (x<0?-x:x);
+    }
+    bool operator == (const Double &oth)const{
+        return (mabs(x-oth.x)<eps);
+    }
+    bool operator != (const Double &oth)const{
+        return (mabs(x-oth.x)>=eps);
+    }
+    bool operator < (const Double &oth)const{
+        return (x-oth.x<=-eps);
+    }
+    bool operator > (const Double &oth)const{
+        return (x-oth.x>=eps);
+    }
+    bool operator <= (const Double &oth)const{
+        return (x-oth.x<eps);
+    }
+    bool operator >= (const Double &oth)const{
+        return (x-oth.x>-eps);
+    }
+    Double operator + (void)const{
+        return x;
+    }
+    Double operator - (void)const{
+        return -x;
+    }
+    Double operator + (const Double &oth)const{
+        return x+oth.x;
+    }
+    Double operator - (const Double &oth)const{
+        return x-oth.x;
+    }
+    Double operator * (const Double &oth)const{
+        return x*oth.x;
+    }
+    Double operator / (const Double &oth)const{
+        return x/oth.x;
+    }
+    void operator += (const Double &oth){
+        x+=oth.x;
+    }
+    void operator -= (const Double &oth){
+        x-=oth.x;
+    }
+    void operator *= (const Double &oth){
+        x*=oth.x;
+    }
+    void operator /= (const Double &oth){
+        x/=oth.x;
+    }
+};
+
+Double sqrt(const Double &x){
+    return (mabs(x.x)<eps?0:sqrt(x.x));
+}
+ostream & operator << (ostream &cout,const Double &x){
+    cout<<x.x;
+    return cout;
+}
+istream & operator >> (istream &cin,Double &x){
+    cin>>x.x;
+    return cin;
+}
+#endif

@@ -1,0 +1,66 @@
+#ifndef _SELF_DEBUG
+#define _SELF_DEBUG 1
+#include <self/operator>
+#include <sstream>
+void print0x(int x)
+{
+	std::vector <int> vec;
+	while(x)
+	{
+		vec.push_back(x&1);
+		x>>=1;
+	}
+	std::reverse(vec.begin(),vec.end());
+	for(int i=0;i<(int)vec.size();i++)
+	{
+		std::cout<<vec[i];
+	}
+	std::cout<<' ';
+}
+
+template <typename T>
+void print0x(T x,int len)
+{
+	std::vector <int> vec;
+	while(x)
+	{
+		std::cout<<(x&1);
+		x>>=1;
+		len--;
+		// vec.push_back(x&1);
+		// x>>=1;
+	}
+	while(len--) cout<<0;
+	// reverse(vec.begin(),vec.end());
+	// for(int i=(int)vec.size();i<len;i++)
+	// {
+	// 	putchar('0');
+	// }
+	// for(size_t i=0;i<vec.size();i++)
+	// {
+	// 	std::cout<<vec[i];
+	// }
+	// std::cout<<' ';
+}
+vector<string> vec_splitter(string s) {
+	s += ',';
+	vector<string> res;
+	while(!s.empty()) {
+		res.push_back(s.substr(0, s.find(',')));
+		s = s.substr(s.find(',') + 1);
+	}
+	return res;
+}
+void debug_out(
+vector<string> __attribute__ ((unused)) args,
+__attribute__ ((unused)) int idx, 
+__attribute__ ((unused)) int LINE_NUM) { cerr << endl; } 
+template <typename Head, typename... Tail>
+void debug_out(vector<string> args, int idx, int LINE_NUM, Head H, Tail... T) {
+	if(idx > 0) cerr << ", "; else cerr << "Line(" << LINE_NUM << ") ";
+	stringstream ss; ss << H;
+	cerr << args[idx] << " = " << ss.str();
+	debug_out(args, idx + 1, LINE_NUM, T...);
+}
+#define debug(...) debug_out(vec_splitter(#__VA_ARGS__), 0, __LINE__, __VA_ARGS__)
+#endif

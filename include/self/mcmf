@@ -1,0 +1,210 @@
+#include <self/utility>
+
+#ifndef CostType
+#define CostType int
+#endif
+struct NetworkWithCost
+{
+	struct Edge
+	{
+		int vertex;
+		int flow;
+		CostType cost;
+		int inv;
+		int dir;
+	};
+	vector <Edge> *edges;
+	inline void addEdge(int x,int y,int limit,CostType cost)
+	{
+		Edge edge;
+		edge.cost=cost;
+		edge.flow=limit;
+		edge.vertex=y;
+		edge.inv=(int)edges[y].size();
+		edge.dir=true;
+		edges[x].push_back(edge);
+		edge.vertex=x;
+		edge.flow=0;
+		edge.cost=-cost;
+		edge.inv=(int)edges[x].size()-1;
+		edge.dir=false;
+		edges[y].push_back(edge);
+	}
+	int src,dst;
+	int n;
+	void init(int _n)
+	{
+		n=_n;
+		edges=new vector <Edge> [n];
+		src=dst=-1;
+	}
+	void feedsd(int _src,int _dst)
+	{
+		src=_src;
+		dst=_dst;
+	}
+	void clear()
+	{
+		for(int i=0;i<n;i++)
+		{
+			edges[i].clear();
+		}
+		src=dst=-1;
+	}
+};
+
+namespace MCMFSpace
+{
+	void operator += (pii &a,const pii &b)
+	{
+		a.first+=b.first;
+		a.second+=b.second;
+	}
+}
+
+struct MCMF
+{
+	const CostType DistInf=numeric_limits<CostType>::max()/2-1e7;
+	NetworkWithCost g;
+	CostType *dist;
+	CostType *h;
+	int *visit;
+	int *cur;
+	queue <int> que;
+	inline void init(NetworkWithCost &_g)
+	{
+		g=_g;
+		dist=new CostType[g.n+5];
+		h=new CostType[g.n+5];
+		visit=new int[g.n+5];
+		cur=new int[g.n+5];
+	}
+	
+	void bellmanford()
+	{
+		for(int i=0;i<g.n;i++)
+		{
+			h[i]=DistInf;
+		}
+		h[g.src]=0;
+		int changeCommitted;
+		for(int T=0;T<g.n;T++)
+		{
+			changeCommitted=0;
+			for(int i=0;i<g.n;i++)
+			{
+				if(h[i]==DistInf) continue;
+				assert(h[i]>=-DistInf);
+				for(auto &e:g.edges[i])
+				{
+					if(e.flow==0) continue;
+					if(h[e.vertex]>h[i]+e.cost)
+					{
+						h[e.vertex]=h[i]+e.cost;
+						changeCommitted=true;
+					}
+				}
+			}
+			if(!changeCommitted) break;
+		}
+	}
+	
+	bool dijkstra()
+	{
+		for(int i=0;i<g.n;i++)
+		{
+			dist[i]=DistInf;
+		}
+		dist[g.src]=0;
+		priority_queue <pair<CostType,int>,vector<pair<CostType,int> >,greater<pair<CostType,int> > > pq;
+		pq.push(mp(0,g.src));
+		while(pq.size())
+		{
+			int x=pq.top().second;
+			CostType cost=pq.top().first;
+			pq.pop();
+			if(dist[x]!=cost) continue;
+			for(auto &e:g.edges[x])
+			{
+				if(e.flow==0) continue;
+				int wcost=cost+e.cost+h[x]-h[e.vertex];
+				if(dist[e.vertex]>wcost)
+				{
+					dist[e.vertex]=wcost;
+					pq.push(mp(dist[e.vertex],e.vertex));
+				}
+			}
+		}
+		for(int i=0;i<g.n;i++) dist[i]+=h[i];
+		return (dist[g.dst]-h[g.dst]<DistInf);
+	}
+	
+	bool dijkstra2()
+	{
+		for(int i=0;i<g.n;i++) dist[i]=DistInf;
+		dist[g.src]=0;
+		while(true)
+		{
+			pii o=mp(DistInf,-1);
+			for(int i=0;i<g.n;i++) if(!visit[i]) chmin(o,mp(dist[i],i));
+			int x=o.second;
+			if(x==g.dst) break;
+			CostType cost=o.first;
+			if(cost>=DistInf) break;
+			visit[x]=1;
+			for(auto &e:g.edges[x])
+			{
+				if(e.flow==0) continue;
+				chmin(dist[e.vertex],cost+e.cost+h[x]-h[e.vertex]);
+			}
+		}
+		for(int i=0;i<g.n;i++)
+		{
+			chmin(dist[i],dist[g.dst]);
+			visit[i]=0;
+			dist[i]+=h[i];
+			h[i]=dist[i];
+		}
+		return dist[g.dst]<DistInf;
+	}
+
+	pair<int,CostType> dfs(int x,int flow)
+	{
+		if(x==g.dst) return mp(flow,0);
+		visit[x]=1;
+		pair<int,CostType> res(0,0);
+		for(int &i=cur[x];i<(int)g.edges[x].size();i++)
+		{
+			int u=g.edges[x][i].vertex;
+			CostType c=g.edges[x][i].cost;
+			if(visit[u] || dist[u]!=dist[x]+c || g.edges[x][i].flow==0) continue;
+			pii f=dfs(u,min(flow,g.edges[x][i].flow));
+			flow-=f.first;
+			res.first+=f.first;res.second+=f.second;
+			res.second+=c*f.first;
+			g.edges[x][i].flow-=f.first;
+			g.edges[u][g.edges[x][i].inv].flow+=f.first;
+			if(flow==0) break;
+		}
+		visit[x]=0;
+		return res;
+	}
+	
+	pair<int,CostType> run()
+	{
+		bellmanford();
+		pair<int,CostType> x=mp(0,0);
+		memset(visit,0,sizeof(int)*g.n);
+		// double s=0;
+		while(dijkstra2())
+		{
+			// double st=clock();
+			memset(cur,0,sizeof(int)*g.n);
+			pair<int,CostType> f=dfs(g.src,inf);
+			x+=f;
+			// s+=clock()-st;
+			// cerr<<(s/CLOCKS_PER_SEC)<<endl;
+		}
+		return x;
+	}
+};

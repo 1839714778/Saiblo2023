@@ -1,0 +1,97 @@
+struct Complex
+{
+	double x,y;
+	Complex():x(0),y(0){}
+	Complex(const double &_x,const double &_y):x(_x),y(_y){}
+};
+ostream & operator << (ostream &cout,const Complex &x)
+{
+	cout<<mp(x.x,x.y);
+	return cout;
+}
+inline Complex operator + (const Complex &a,const Complex &b){return Complex(a.x+b.x,a.y+b.y);}
+inline Complex operator - (const Complex &a,const Complex &b){return Complex(a.x-b.x,a.y-b.y);}
+inline Complex operator * (const Complex &a,const Complex &b){return Complex(a.x*b.x-a.y*b.y,a.x*b.y+a.y*b.x);}
+inline Complex conjunc(const Complex &x) {return Complex(x.x,-x.y);}
+
+template <int logn>
+struct FFT
+{
+	static const int N=(1<<logn);
+	static constexpr double pi=asin(1)*2;
+	Complex w[N+5];
+	Complex buf[N+5];
+	Complex r[N+5];
+	int inv[N+5];
+	void dft(Complex c[],int nn,int lg,int rev)
+	{
+		for(int i=1;i<nn;i++)
+		{
+			inv[i]=(inv[i>>1]>>1) | ((i&1)<<(lg-1));
+		}
+		for(int i=0;i<nn;i++)
+		{
+			buf[i]=c[inv[i]];
+		}
+		int lvl=logn;
+		for(int b=1;b<nn;b<<=1)
+		{
+			lvl--;
+			for(int i=0;i<b;i++) r[i]=(rev?w[N-(i<<lvl)]:w[i<<lvl]);
+			for(int i=0;i<nn;i+=b*2)
+			{
+				Complex *lhs=buf+i,*rhs=buf+i+b;
+				for(int j=0;j<b;j++)
+				{
+					Complex tmp=r[j]**rhs;
+					// *rhs=*lhs-tmp;
+					rhs->x=lhs->x-tmp.x;
+					rhs->y=lhs->y-tmp.y;
+					// *lhs=*lhs+tmp;
+					lhs->x+=tmp.x;
+					lhs->y+=tmp.y;
+					lhs++;rhs++;
+				}
+			}
+		}
+		if(rev)
+		{
+			for(int i=0;i<nn;i++) buf[i].x/=nn,buf[i].y/=nn;
+		}
+		for(int i=0;i<nn;i++) c[i]=buf[i];
+	}
+
+	Complex ca[N+5],cb[N+5],cc[N+5];
+	Complex da[N+5],db[N+5],dc[N+5],dd[N+5];
+	inline vector<ll> sqr(vector<ll> v)
+	{
+		while(v.size() && v.back()==0) v.pop_back();
+		if(v.size()<16)
+		{
+			if(v.empty()) return v;
+			int n=v.size()-1;
+			vector<ll> res(n+n+1,0);
+			for(int i=0;i<=n;i++) for(int j=0;j<=n;j++) res[i+j]+=v[i]*v[j];
+			return res;
+		}
+		int nn=1,lg=0;
+		while(nn<(int)v.size()+(int)v.size()-1) nn<<=1,lg++;
+		v.resize(nn,0);
+		for(int i=0;i<nn;i++) ca[i].x=(v[i]),ca[i].y=0;
+		dft(ca,nn,lg,0);
+		for(int i=0;i<nn;i++) ca[i]=ca[i]*ca[i];
+		dft(ca,nn,lg,1);
+		v.clear();
+		for(int i=0;i<nn;i++) v.push_back(round(ca[i].x));
+		while(v.size() && v.back()==0) v.pop_back();
+		return v;
+	}
+	FFT()
+	{
+		for(int i=0;i<=N;i++)
+		{
+			w[i].x=cos(pi*2*(double)i/N);
+			w[i].y=sin(pi*2*(double)i/N);
+		}
+	}
+};

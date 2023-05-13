@@ -1,0 +1,23 @@
+#ifndef _SELF_RAND
+#define _SELF_RAND 1
+#ifdef FIXED_RAND
+long long _Rand_Gen_Num() {return 1LL*rand()*RAND_MAX+rand();}
+int rand(int l,int r) {long long x=_Rand_Gen_Num();return x%(r-l+1)+l;}
+#else
+#include <time.h>
+#include <chrono>
+#include <random>
+using namespace std; 
+mt19937 rng(chrono::steady_clock::now().time_since_epoch().count());
+#define rand(l,r) uniform_int_distribution<int>(l,r)(rng)
+#endif
+template <typename Iterator>
+void _m_random_shuffle(Iterator begin,Iterator end)
+{
+    for(Iterator it=begin+1;it!=end;it++)
+    {
+        iter_swap(begin+rand(0,it-begin),it);
+    }
+}
+#define random_shuffle(a,b) _m_random_shuffle(a,b)
+#endif

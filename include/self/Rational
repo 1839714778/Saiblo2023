@@ -1,0 +1,20 @@
+struct Rational
+{
+	ll num,dom;
+	Rational(){}
+	Rational(const ll &x):num(x),dom(1){}
+	Rational(const ll &_a,const ll &_b):num(_a),dom(_b){}
+	
+	void normalize() {ll g=__gcd(num,dom);num/=g;dom/=g;}
+};
+ostream & operator << (ostream &cout,const Rational &x) {cout<<x.num<<'/'<<x.dom;return cout;}
+inline Rational operator + (const Rational &a,const Rational &b) {return Rational(a.num*b.dom+a.dom*b.num,a.dom*b.dom);}
+inline Rational operator - (const Rational &a,const Rational &b) {return Rational(a.num*b.dom-a.dom*b.num,a.dom*b.dom);}
+inline Rational operator * (const Rational &a,const Rational &b) {return Rational(a.num*b.num,a.dom*b.dom);}
+inline Rational operator / (const Rational &a,const Rational &b) {return Rational(a.num*b.dom,a.dom*b.num);}
+inline bool operator < (const Rational &a,const Rational &b) {return (a-b).num<0;}
+inline bool operator <= (const Rational &a,const Rational &b) {return (a-b).num<=0;}
+inline bool operator > (const Rational &a,const Rational &b) {return b<a;}
+inline bool operator >= (const Rational &a,const Rational &b) {return b<=a;}
+inline bool operator == (const Rational &a,const Rational &b) {return (a-b).num==0;}
+inline bool operator != (const Rational &a,const Rational &b) {return (a-b).num!=0;} 

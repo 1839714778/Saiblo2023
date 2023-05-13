@@ -1,0 +1,36 @@
+#include <vector>
+#include <stack>
+using namespace std;
+namespace tarjan
+{
+	struct graph
+	{
+		vector <pair<int,int> > *edges;
+		int m;
+		int n;
+		void AddEdge(int x,int y)
+		{
+			edges[x].push_back(mp(y,m));
+			edges[y].push_back(mp(x,m));
+			m++;
+		}
+		void init(int n)
+		{
+			edges=new vector <int> [n];
+			m=0;
+		}
+	};
+	namespace bs
+	{
+		stack <int> stk;
+		void dfs(int x,int p,graph &g)
+		{
+			
+		}
+		vector <int> getBridge(graph g)
+		{
+			dfs(0,-1,g);
+		}
+	};
+};
+
