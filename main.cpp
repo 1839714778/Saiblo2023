@@ -1,8 +1,8 @@
 #include "include/simulate.hpp"
 #include "include/template.hpp"
 #include "include/common.hpp"
-#include <bits/stdc++.h>
 #include <Python.h>
+#include <bits/stdc++.h>
 #define mp make_pair
 #define pii pair<int,int>
 using namespace std;
@@ -180,7 +180,7 @@ namespace MyAI
 			if(info.bases[player_id^1].gen_speed_level==k/3 && info.bases[player_id^1].ant_level==k%3) vec.emplace_back(1);
 			else vec.emplace_back(0);
 		}
-
+		// cout<<vec.size()<<endl;
 		return vec;
 	}
 	vector<ftype> predictPY(const Board &board,int valid[],int applyDir)
@@ -189,34 +189,47 @@ namespace MyAI
 		vector<ftype> vvalid;
 		for(int i=0;i<ActionSize;i++) vvalid.emplace_back(valid[i]);
 		PyObject *list1=PyList_New(0),*list2=PyList_New(0);
-		for(auto &x:seq)
+		// cerr<<seq.size()<<' ';
+		// cout<<endl;
+		for(int i=0;i<seq.size();i++)
 		{
-			auto tmp=Py_BuildValue("f",x);
+			// cerr<<"Building"<<' '<<i<<' '<<(float)seq[i]<<endl;
+			auto tmp=Py_BuildValue("f",(float)seq[i]);
+			// cerr<<"Built"<<endl;
 			assert(tmp);
 			PyList_Append(list1,tmp);
-			Py_DecRef(tmp);
+			// Py_DecRef(tmp);
 		}
+		// cerr<<"Predicting"<<endl;
 		for(int i=0;i<ActionSize;i++)
 		{
-			auto tmp=Py_BuildValue("f",valid[i]);
+			auto tmp=Py_BuildValue("f",(float)valid[i]);
 			assert(tmp);
 			PyList_Append(list2,tmp);
-			Py_DecRef(tmp);
+			// Py_DecRef(tmp);
 		}
 		assert(pFunc);
+		assert(list1);assert(list2);
+		// cerr<<"FUCK"<<endl;
+		// cerr<<seq.size()<<' '<<ActionSize<<endl;
 		PyObject* result=PyObject_CallFunction(pFunc,"(OOi)",list1,list2,applyDir);
 		assert(result);
+		// cout<<result<<endl;
+		// cerr<<"SHIT"<<endl;
 		vector<ftype> res;
-		for(int i=0;i<ActionSize;i++)
+		for(int i=0;i<1+ActionSize;i++)
 		{
 			PyObject* tmp=PyList_GetItem(result,i);
 			assert(tmp);
 			res.emplace_back(PyFloat_AsDouble(tmp));
-			Py_DecRef(tmp);
+			// Py_DecRef(tmp);
 		}
 		Py_DecRef(list1);
 		Py_DecRef(list2);
 		Py_DecRef(result);
+		// for(auto x:res) cout<<x<<' ';
+		// cout<<endl;
+		// exit(0);
 		return res;
 	}
 	int randomChoose(const vector<ftype> &v)
@@ -290,7 +303,8 @@ namespace MyAI
 		int rt=-1;
 		for(int i=0;i<M+1;i++)
 		{
-			mcts(rt,board,i);
+			ftype t=mcts(rt,board,i);
+			s_val[rt]+=t;
 		}
 
 		vector<ftype> p(ActionSize,0);
@@ -347,7 +361,9 @@ void init()
 		PyRun_SimpleString(importDir.c_str());
 	}
 	PyObject* file=PyImport_ImportModule("model_predict");
-	PyObject* pFunc=PyObject_GetAttrString(file,"predict");
+	assert(file);
+	pFunc=PyObject_GetAttrString(file,"predict");
+	assert(pFunc);
 
 	tower_id[TowerType::Basic]=1;
 	tower_id[TowerType::Heavy]=2;
@@ -399,6 +415,19 @@ void init()
 int main()
 {
 	init();
+	// int res=0;
+	// for(int i=0;i<10001;i++)
+	// {
+	// 	auto x=Py_BuildValue("f",(float)i);
+	// 	res^=(int)(PyFloat_AsDouble(x));
+	// 	Py_DecRef(x);
+	// }
+	// cout<<res<<endl;
+	// return 0;
+	GameInfo info(2343ull);
+	vector<Operation> vec=MyAI::solve(0,info);
+	// cout<<vec[0].type<<endl;
+	// cout<<vec.size()<<endl;
 	Py_Finalize();
 	return 0;
 }
