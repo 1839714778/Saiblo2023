@@ -1,3 +1,4 @@
+using ftype=double;
 #include "include/simulate.hpp"
 #include "include/template.hpp"
 #include "include/common.hpp"
@@ -14,12 +15,20 @@ int ant_max_hp[2][N][N];
 int ant_sum_hp[2][N][N];
 int tower_id[105];
 TowerType id_tower[15];
-// auto seed=chrono::steady_clock().now().time_since_epoch().count();
-ull seed=20050114;
+auto seed=chrono::steady_clock().now().time_since_epoch().count();
+// ull seed=20050111;
 mt19937 rng(seed);
 vector<pii> towerPos[2];
-PyObject* pFunc;
 int isTraining;
+PyObject *predict_a0,*predict_a1;
+
+struct Piece
+{
+	vector<ftype> input;
+	vector<ftype> mcts_p;
+	int player;
+};
+vector<Piece> datas;
 
 struct Board
 {
@@ -110,10 +119,14 @@ struct Board
 
 namespace MyAI
 {
-	using ftype=double;
 	const int ActionSize=133;
 	const int M=50;
 	const ftype cpuct=1;
+	PyObject* pFunc;
+	void set_pFunc(PyObject* new_pFunc)
+	{
+		pFunc=new_pFunc;
+	}
 	vector<ftype> paddingBoard(const Board &board)
 	{
 		auto player_id=board.player_id;
@@ -193,6 +206,7 @@ namespace MyAI
 			if(info.bases[player_id^1].gen_speed_level==k/3 && info.bases[player_id^1].ant_level==k%3) vec.emplace_back(1);
 			else vec.emplace_back(0);
 		}
+		vec.emplace_back(info.round);
 		// cout<<vec.size()<<endl;
 		return vec;
 	}
@@ -331,11 +345,10 @@ namespace MyAI
 		return -t;
 	}
 
-	vector<Operation> solve(int player_id,const GameInfo &info/*,vector<ftype>* actionP=0*/)
+	vector<Operation> solve(int player_id,const GameInfo &info)
 	{
 		// return vector<Operation>({});
 		Board board(player_id,info);
-		debug(board.info.round);
 		int rt=-1;
 		for(int i=0;i<M+1;i++)
 		{
@@ -367,7 +380,7 @@ namespace MyAI
 			p[mx.second]=1;
 		}
 
-		// if(actionP) actionP=new vector<ftype>(p);
+		datas.emplace_back(Piece({paddingBoard(board),p,player_id}));
 
 		int ch=randomChoose(p);
 		vector<Operation> res;
@@ -391,13 +404,14 @@ void init()
 		// cout<<"sys.path.append('~/Saiblo2023/models/')"<<endl;
 		PyRun_SimpleString("sys.path.append('/home/monkey/Saiblo2023/models/')");
 		// string importDir="sys.path.append('"+(string)(cwd)+"')\n";
-		// debug(importDir);
 		// PyRun_SimpleString(importDir.c_str());
 	}
 	PyObject* file=PyImport_ImportModule("model_predict");
 	assert(file);
-	pFunc=PyObject_GetAttrString(file,"predict");
-	assert(pFunc);
+	predict_a0=PyObject_GetAttrString(file,"predict_a0");
+	assert(predict_a0);
+	predict_a1=PyObject_GetAttrString(file,"predict_a1");
+	assert(predict_a1);
 
 	tower_id[TowerType::Basic]=1;
 	tower_id[TowerType::Heavy]=2;
@@ -453,11 +467,15 @@ void play()
 	int winner=-1;
 	for(int i=0;i<512;i++)
 	{
+		if(i%32==0) cerr<<"Round "<<i<<" started"<<endl;
 		vector<Operation> vec;
+
+		MyAI::set_pFunc(predict_a0);
 		vec=MyAI::solve(0,s.get_info());
 		for(auto &op:vec) assert(s.add_operation_of_player(0,op));
 		s.apply_operations_of_player(0);
 		
+		MyAI::set_pFunc(predict_a1);
 		vec=MyAI::solve(1,s.get_info());
 		for(auto &op:vec) assert(s.add_operation_of_player(1,op));
 		s.apply_operations_of_player(1);
@@ -471,14 +489,26 @@ void play()
 			break;
 		}
 	}
-	cout<<"winner is "<<winner<<endl;
+	cerr<<"Finishing game and winner is "<<winner<<endl;
+	cerr<<"Ant Kills: "<<s.get_info().antKills[0]<<' '<<s.get_info().antKills[1]<<endl;
+	cerr<<"Base HP: "<<s.get_info().bases[0].hp<<' '<<s.get_info().bases[1].hp<<endl;
+	freopen("models/data/a1.txt","a",stdout);
+	for(auto &piece:datas)
+	{
+		for(int i=0;i<piece.input.size();i++) cout<<piece.input[i]<<' ';
+		if(piece.player==winner) cout<<1<<' ';else cout<<1<<' ';
+		for(int i=0;i<piece.mcts_p.size();i++) cout<<piece.mcts_p[i]<<' ';
+		cout<<'\n';
+	}
+	cout<<flush;
+	fclose(stdout);
 }
 
 int main()
 {
 	init();
-	run_with_ai(MyAI::solve);
-	// play();
+	// run_with_ai(MyAI::solve);
+	play();
 	Py_Finalize();
 	return 0;
 }
