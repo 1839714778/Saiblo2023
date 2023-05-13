@@ -1,6 +1,6 @@
 #ifndef _SELF_OPERATOR
 #define _SELF_OPERATOR 1
-#include <self/utility>
+#include "utility"
 using namespace std;
 template <typename T>
 ostream & operator<<(ostream &cout, const vector<T> &vec)

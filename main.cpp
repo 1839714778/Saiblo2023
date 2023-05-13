@@ -1,11 +1,11 @@
 #include "include/simulate.hpp"
 #include "include/template.hpp"
 #include "include/common.hpp"
-#include <Python.h>
+#include "include/python3.9/Python.h"
+#include "include/self/debug"
 #include <bits/stdc++.h>
 // #define mp make_pair
 // #define pii pair<int,int>
-#include <self/debug>
 using namespace std;
 const int N=MAP_SIZE;
 
@@ -331,7 +331,7 @@ namespace MyAI
 		return -t;
 	}
 
-	vector<Operation> solve(int player_id,const GameInfo &info,vector<ftype>* actionP=0)
+	vector<Operation> solve(int player_id,const GameInfo &info/*,vector<ftype>* actionP=0*/)
 	{
 		Board board(player_id,info);
 		debug(board.info.round);
@@ -366,7 +366,7 @@ namespace MyAI
 			p[mx.second]=1;
 		}
 
-		if(actionP) actionP=new vector<ftype>(p);
+		// if(actionP) actionP=new vector<ftype>(p);
 
 		int ch=randomChoose(p);
 		vector<Operation> res;
@@ -388,6 +388,7 @@ void init()
 		PyArg_Parse(pResult, "s", &cwd);
 		PyRun_SimpleString("import sys");
 		string importDir="sys.path.append('"+(string)(cwd)+"')\n";
+		// debug(importDir);
 		PyRun_SimpleString(importDir.c_str());
 	}
 	PyObject* file=PyImport_ImportModule("model_predict");
@@ -440,7 +441,7 @@ void init()
 		}
 	}
 
-	cout<<"----------Initialized----------"<<endl;
+	cerr<<"----------Initialized----------"<<endl;
 }
 
 void play()
@@ -473,7 +474,8 @@ void play()
 int main()
 {
 	init();
-	play();
+	run_with_ai(MyAI::solve);
+	// play();
 	Py_Finalize();
 	return 0;
 }

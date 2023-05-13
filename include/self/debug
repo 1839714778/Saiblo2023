@@ -1,6 +1,6 @@
 #ifndef _SELF_DEBUG
 #define _SELF_DEBUG 1
-#include <self/operator>
+#include "operator"
 #include <sstream>
 void print0x(int x)
 {
