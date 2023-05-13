@@ -222,6 +222,7 @@ public:
      */
     bool add_operation_of_player(int player_id, Operation op)
     {
+        assert(operations[player_id].empty());
         if (info.is_operation_valid(player_id, operations[player_id], op))
         {
             operations[player_id].push_back(op);

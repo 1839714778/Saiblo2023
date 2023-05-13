@@ -9,6 +9,7 @@ tf.compat.v1.disable_eager_execution()
 # print(tf.executing_eagerly())
 network=models.load_model('model.h5')
 # network.summary()
+np.random.seed(20050114)
 
 def predict(input,valid,applyDir):
 	# print(len(input),len(valid),applyDir)

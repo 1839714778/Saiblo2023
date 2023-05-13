@@ -14,7 +14,8 @@ int ant_max_hp[2][N][N];
 int ant_sum_hp[2][N][N];
 int tower_id[105];
 TowerType id_tower[15];
-auto seed=chrono::steady_clock().now().time_since_epoch().count();
+// auto seed=chrono::steady_clock().now().time_since_epoch().count();
+ull seed=20050114;
 mt19937 rng(seed);
 vector<pii> towerPos[2];
 PyObject* pFunc;
@@ -22,71 +23,82 @@ int isTraining;
 
 struct Board
 {
-	GameInfo info;
 	int player_id;
+	GameInfo info;
 	GameState gameState;
-	int convertToOperation(int op,Operation &OP)const{
-		if(op<=0) return true;
-		op--;
-		assert(op<=towerPos[player_id].size()*4);
-		int x=towerPos[player_id][op/4].first;
-		int y=towerPos[player_id][op/4].second;
-		int type=op%4;
-		int found_type=0,found_id;
-		for(auto &tower:info.all_towers())
+	Board() {}
+	Board(int player_id,GameInfo info):
+		player_id(player_id),info(info),gameState(Running){}
+	int convertToOperation(int op,vector<Operation> &vec)const{
+		vec.clear();
+		if(op==0) {}
+		else if(op<towerPos[player_id].size()*4+1)
 		{
-			if(tower.player!=player_id) continue;
-			if(tower.x!=x || tower.y!=y) continue;
-			found_type=tower_id[tower.type];
-			found_id=tower.id;
-		}
-		if(type==0)
-		{
-			if(found_type==0) return false;
-			else
+			op--;
+			int x=towerPos[player_id][op/4].first;
+			int y=towerPos[player_id][op/4].second;
+			int type=op%4;
+			int found_type=0,found_id=-1;
+			for(auto &tower:info.all_towers())
 			{
-				OP=Operation(OperationType::DowngradeTower,found_id,-1);
-				if(!info.is_operation_valid(player_id,OP)) return false;
-				return true;
+				if(tower.player!=player_id) continue;
+				if(tower.x!=x || tower.y!=y) continue;
+				found_type=tower_id[tower.type];
+				found_id=tower.id;
 			}
-		}
-		else
-		{
-			if(found_type>=5) return false;
-			else
+			if(type==0)
 			{
-				if(found_type==0)
-				{
-					OP=Operation(OperationType::BuildTower,x,y);
-					if(!info.is_operation_valid(player_id,OP)) return false;
-					return true;
-				}
+				if(found_type==0) return false;
 				else
 				{
-					OP=Operation(OperationType::UpgradeTower,found_id,id_tower[found_type*3+type-2]);
-					if(!info.is_operation_valid(player_id,OP)) return false;
-					return true;
+					vec.emplace_back(Operation(DowngradeTower,found_id,-1));
+				}
+			}
+			else
+			{
+				if(found_type>=5) return false;
+				else
+				{
+					if(found_type==0)
+					{
+						vec.emplace_back(Operation(BuildTower,x,y));
+					}
+					else
+					{
+						vec.emplace_back(Operation(UpgradeTower,found_id,id_tower[found_type*3+type-2]));
+					}
 				}
 			}
 		}
+		for(int i=0;i<(int)vec.size();i++)
+		{
+			auto tmp=vec;
+			tmp.resize(i);
+			if(!info.is_operation_valid(player_id,tmp,vec[i])) return false;
+		}
+		return true;
 	}
 	int isValid(int x)const
 	{
-		Operation tmp;
+		vector<Operation> tmp;
 		return convertToOperation(x,tmp);
 	}
 	Board getMove(int x)const
 	{
-		Operation op;
+		vector<Operation> vec;
 		Board board(*this);
 		Simulator s(board.info);
-		if(convertToOperation(x,op)) 
+		if(convertToOperation(x,vec)) 
 		{
-			s.add_operation_of_player(board.player_id,op);
+			for(auto &op:vec)
+			{
+				s.add_operation_of_player(board.player_id,op);
+			}
 			s.apply_operations_of_player(board.player_id);
 		}
 		else
 		{
+			assert(0);
 			//do nothing
 		}
 		if(board.player_id==1) board.gameState=s.next_round();
@@ -321,9 +333,8 @@ namespace MyAI
 
 	vector<Operation> solve(int player_id,const GameInfo &info,vector<ftype>* actionP=0)
 	{
-		Board board;
-		board.player_id=player_id;
-		board.info=info;
+		Board board(player_id,info);
+		debug(board.info.round);
 		int rt=-1;
 		for(int i=0;i<M+1;i++)
 		{
@@ -358,16 +369,9 @@ namespace MyAI
 		if(actionP) actionP=new vector<ftype>(p);
 
 		int ch=randomChoose(p);
-		Operation op;
-		if(!board.convertToOperation(ch,op))
-		{
-			assert(ch==0);
-			return vector<Operation>({});
-		}
-		else
-		{
-			return vector<Operation>({op});
-		}
+		vector<Operation> res;
+		assert(board.convertToOperation(ch,res));
+		return res;
 	}
 }
 
@@ -435,13 +439,13 @@ void init()
 			}
 		}
 	}
-	cerr<<towerPos[0].size()<<' '<<towerPos[1].size()<<endl;
+
+	cout<<"----------Initialized----------"<<endl;
 }
 
 void play()
 {
-	Simulator s(GameInfo(1ull));
-	int cur=0;
+	Simulator s(GameInfo({seed}));
 	int winner=-1;
 	for(int i=0;i<512;i++)
 	{

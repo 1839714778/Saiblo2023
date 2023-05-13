@@ -3,7 +3,7 @@ from keras import layers
 from keras import Input
 
 input=Input(shape=(1994,),dtype='float32',name='input')
-layer1=layers.Dense(64,activation='relu')(input)
+layer1=layers.Dense(32,activation='relu')(input)
 output1=layers.Dense(1,activation='tanh')(layer1)
 output2=layers.Dense(133,activation='softmax')(layer1)
 answer=layers.concatenate([output1,output2],axis=-1)
