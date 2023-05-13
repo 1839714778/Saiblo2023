@@ -1,0 +1,1 @@
+main: main.cpp:410: void init(): Assertion `file' failed.

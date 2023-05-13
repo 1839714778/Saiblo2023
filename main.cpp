@@ -458,7 +458,7 @@ void init()
 		}
 	}
 
-	cerr<<"----------Initialized----------"<<endl;
+	cout<<"----------Initialized----------"<<endl;
 }
 
 void play()
@@ -467,7 +467,7 @@ void play()
 	int winner=-1;
 	for(int i=0;i<512;i++)
 	{
-		if(i%32==0) cerr<<"Round "<<i<<" started"<<endl;
+		if(i%32==0) cout<<"Round "<<i<<" started"<<endl;
 		vector<Operation> vec;
 
 		MyAI::set_pFunc(predict_a0);
@@ -492,11 +492,11 @@ void play()
 	cerr<<"Finishing game and winner is "<<winner<<endl;
 	cerr<<"Ant Kills: "<<s.get_info().antKills[0]<<' '<<s.get_info().antKills[1]<<endl;
 	cerr<<"Base HP: "<<s.get_info().bases[0].hp<<' '<<s.get_info().bases[1].hp<<endl;
-	freopen("models/data/a1.txt","a",stdout);
+	freopen("models/data.txt","a",stdout);
 	for(auto &piece:datas)
 	{
 		for(int i=0;i<piece.input.size();i++) cout<<piece.input[i]<<' ';
-		if(piece.player==winner) cout<<1<<' ';else cout<<1<<' ';
+		if(piece.player==winner) cout<<1<<' ';else cout<<-1<<' ';
 		for(int i=0;i<piece.mcts_p.size();i++) cout<<piece.mcts_p[i]<<' ';
 		cout<<'\n';
 	}
@@ -506,6 +506,7 @@ void play()
 
 int main()
 {
+	freopen("log.txt","w",stderr);
 	init();
 	// run_with_ai(MyAI::solve);
 	play();
