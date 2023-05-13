@@ -1,7 +1,7 @@
 #include "include/simulate.hpp"
 #include "include/template.hpp"
 #include "include/common.hpp"
-#include "include/python3.9/Python.h"
+#include <python3.9/Python.h>
 #include "include/self/debug"
 #include <bits/stdc++.h>
 // #define mp make_pair
@@ -333,6 +333,7 @@ namespace MyAI
 
 	vector<Operation> solve(int player_id,const GameInfo &info/*,vector<ftype>* actionP=0*/)
 	{
+		// return vector<Operation>({});
 		Board board(player_id,info);
 		debug(board.info.round);
 		int rt=-1;
@@ -380,16 +381,18 @@ void init()
 	isTraining=true;
 	Py_Initialize();
 	{
-		PyObject *pModule = PyImport_ImportModule("os");
-		PyObject *pFunc = PyObject_GetAttrString(pModule, "getcwd");
-		PyObject *pArgs = PyTuple_New(0);
-		PyObject *pResult = PyObject_CallObject(pFunc, pArgs);
-		char *cwd;
-		PyArg_Parse(pResult, "s", &cwd);
+		// PyObject *pModule = PyImport_ImportModule("os");
+		// PyObject *pFunc = PyObject_GetAttrString(pModule, "getcwd");
+		// PyObject *pArgs = PyTuple_New(0);
+		// PyObject *pResult = PyObject_CallObject(pFunc, pArgs);
+		// char *cwd;
+		// PyArg_Parse(pResult, "s", &cwd);
 		PyRun_SimpleString("import sys");
-		string importDir="sys.path.append('"+(string)(cwd)+"')\n";
+		// cout<<"sys.path.append('~/Saiblo2023/models/')"<<endl;
+		PyRun_SimpleString("sys.path.append('/home/monkey/Saiblo2023/models/')");
+		// string importDir="sys.path.append('"+(string)(cwd)+"')\n";
 		// debug(importDir);
-		PyRun_SimpleString(importDir.c_str());
+		// PyRun_SimpleString(importDir.c_str());
 	}
 	PyObject* file=PyImport_ImportModule("model_predict");
 	assert(file);

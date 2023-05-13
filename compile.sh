@@ -1,1 +1,1 @@
-g++ main.cpp -o main -std=c++17 -O2 -lpython3.9 -O2 #-fsanitize=address -fsanitize=undefined
+g++ main.cpp -o main -std=c++17 -O2 -lpython3.9 -O2 -I "/usr/local/include/python3.9" #-fsanitize=address -fsanitize=undefined

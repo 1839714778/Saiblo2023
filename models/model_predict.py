@@ -7,7 +7,7 @@ import numpy as np
 # import keras
 tf.compat.v1.disable_eager_execution()
 # print(tf.executing_eagerly())
-network=models.load_model('model.h5')
+network=models.load_model('/home/monkey/Saiblo2023/models/model.h5')
 # network.summary()
 np.random.seed(20050114)
 
